@@ -13,13 +13,13 @@
 
 
 
-struct _gainAlgorithm : public _NT_algorithm
+struct DirectionalSequencerAlgorithm : public _NT_algorithm
 {
 	ModeSelector Selector;
 	PersistentData Persist;
 
-	_gainAlgorithm() {}
-	~_gainAlgorithm() {}
+	DirectionalSequencerAlgorithm() {}
+	~DirectionalSequencerAlgorithm() {}
 
 	float gain;
 
@@ -55,7 +55,7 @@ static const _NT_parameterPages parameterPages = {
 void	calculateRequirements( _NT_algorithmRequirements& req, const int32_t* specifications )
 {
 	req.numParameters = ARRAY_SIZE(parameters);
-	req.sram = sizeof(_gainAlgorithm);
+	req.sram = sizeof(DirectionalSequencerAlgorithm);
 	req.dram = 0;
 	req.dtc = 0;
 	req.itc = 0;
@@ -63,7 +63,7 @@ void	calculateRequirements( _NT_algorithmRequirements& req, const int32_t* speci
 
 _NT_algorithm*	construct( const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications )
 {
-	_gainAlgorithm* alg = new (ptrs.sram) _gainAlgorithm();
+	DirectionalSequencerAlgorithm* alg = new (ptrs.sram) DirectionalSequencerAlgorithm();
 	alg->parameters = parameters;
 	alg->parameterPages = &parameterPages;
 
@@ -83,34 +83,15 @@ _NT_algorithm*	construct( const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorit
 
 void	parameterChanged( _NT_algorithm* self, int p )
 {
-	_gainAlgorithm* pThis = (_gainAlgorithm*)self;
-	if ( p == kParamGain )
-		pThis->gain = pThis->v[kParamGain] / 100.0f;
 }
 
 void 	step( _NT_algorithm* self, float* busFrames, int numFramesBy4 )
 {
-	_gainAlgorithm* pThis = (_gainAlgorithm*)self;
-	float gain = pThis->gain;
-	int numFrames = numFramesBy4 * 4;
-	const float* in = busFrames + ( pThis->v[kParamInput] - 1 ) * numFrames;
-	float* out = busFrames + ( pThis->v[kParamOutput] - 1 ) * numFrames;
-	bool replace = pThis->v[kParamOutputMode];
-	if ( !replace )
-	{
-		for ( int i=0; i<numFrames; ++i )
-			out[i] += in[i] * gain;
-	}
-	else
-	{
-		for ( int i=0; i<numFrames; ++i )
-			out[i] = in[i] * gain;
-	}
 }
 
 bool	draw( _NT_algorithm* self )
 {
-	_gainAlgorithm* pThis = (_gainAlgorithm*)self;
+	DirectionalSequencerAlgorithm* pThis = (DirectionalSequencerAlgorithm*)self;
 	pThis->Selector.Draw();
 	pThis->Selector.SelectedMode->Draw();
 	return true;
@@ -118,9 +99,9 @@ bool	draw( _NT_algorithm* self )
 
 static const _NT_factory factory =
 {
-	.guid = NT_MULTICHAR( 'E', 'x', 'g', 'a' ),
-	.name = "Gain",
-	.description = "Applies gain",
+	.guid = NT_MULTICHAR( 'A', 'T', 'd', 's' ),
+	.name = "Directional Sequencer",
+	.description = "Does Stuff",
 	.numSpecifications = 0,
 	.calculateRequirements = calculateRequirements,
 	.construct = construct,
