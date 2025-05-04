@@ -1,9 +1,9 @@
 #pragma once
-#include <modeBase.h>
-#include <gridMode.h>
-#include <quantizerMode.h>
-#include <settingsMode.h>
-#include <userTriggersMode.h>
+#include "modeBase.h"
+#include "gridMode.h"
+#include "quantizerMode.h"
+#include "settingsMode.h"
+#include "userTriggersMode.h"
 
 struct ModeSelector {
 
@@ -20,3 +20,4 @@ struct ModeSelector {
 	void SelectModeByIndex(int index);
 	void Draw();
 };
+

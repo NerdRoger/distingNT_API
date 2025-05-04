@@ -15,7 +15,7 @@ all: $(FINAL_OUTPUT)
 
 # Compile each .cpp file to a local .o file
 %.o: %.cpp
-	arm-none-eabi-c++ -std=c++11 -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -fno-exceptions -fno-rtti -Os -fPIC -Wall $(INCLUDE_PATHS) -c -o $@ $<
+	arm-none-eabi-c++ -std=c++23 -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -fno-exceptions -fno-rtti -Os -fPIC -Wall $(INCLUDE_PATHS) -c -o $@ $<
 
 # Link all .o files into one final .o file
 $(FINAL_OUTPUT): $(OBJ_FILES)

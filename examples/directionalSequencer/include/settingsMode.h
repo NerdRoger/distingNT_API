@@ -1,8 +1,8 @@
 #pragma once
 
-#include <modeBase.h>
+#include "modeBase.h"
 
 struct SettingsMode : ModeBase {
-	void DrawIcon(int x, int y, int color) override;
-	void Draw() override;
+	void DrawIcon(int x, int y, int color) const override;
+	void Draw() const override;
 };

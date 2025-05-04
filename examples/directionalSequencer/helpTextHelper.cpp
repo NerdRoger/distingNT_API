@@ -1,10 +1,6 @@
-#include <helpTextHelper.h>
+#include <stddef.h>
 #include <distingnt/api.h>
-
-
-const char* HelpTextHelper::HelpText = NULL;
-int HelpTextHelper::DurationFrames = 90;
-int HelpTextHelper::RemainingDuration = 0;
+#include "helpTextHelper.h"
 
 
 void HelpTextHelper::DisplayHelpText(char* text) {

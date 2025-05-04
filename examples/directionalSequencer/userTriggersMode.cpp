@@ -1,7 +1,7 @@
 #include <distingnt/api.h>
-#include <userTriggersMode.h>
+#include "userTriggersMode.h"
 
-void UserTriggersMode::DrawIcon(int x, int y, int color) {
+void UserTriggersMode::DrawIcon(int x, int y, int color) const {
 	int dim = color * 0.4;
 	// background trigger
 	NT_drawShapeI(kNT_line, x + 3, y + 0, x + 3, y + 16, dim);
@@ -15,6 +15,6 @@ void UserTriggersMode::DrawIcon(int x, int y, int color) {
 	NT_drawShapeI(kNT_line, x + 13, y + 16, x + 16, y + 16, color);
 }
 
-void UserTriggersMode::Draw() {
+void UserTriggersMode::Draw() const {
 	NT_drawText( ModeAreaX + 50, 30, "Triggers Mode Placeholder" );
 }

@@ -1,7 +1,7 @@
 #include <distingnt/api.h>
-#include <settingsMode.h>
+#include "settingsMode.h"
 
-void SettingsMode::DrawIcon(int x, int y, int color) {
+void SettingsMode::DrawIcon(int x, int y, int color) const {
 	// faders
 	NT_drawShapeI(kNT_box, x +  5, y +  2, x +  8, y +  4, color);
 	NT_drawShapeI(kNT_box, x + 12, y +  7, x + 15, y +  9, color);
@@ -15,6 +15,6 @@ void SettingsMode::DrawIcon(int x, int y, int color) {
 	NT_drawShapeI(kNT_line, x +  5, y + 13, x + 16, y + 13, color);
 }
 
-void SettingsMode::Draw() {
+void SettingsMode::Draw() const {
 	NT_drawText( ModeAreaX + 50, 30, "Settings Mode Placeholder" );
 }

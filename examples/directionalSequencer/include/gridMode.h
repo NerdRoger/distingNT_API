@@ -1,18 +1,22 @@
 #pragma once
 
-#include <common.h>
-#include <modeBase.h>
-#include <cellData.h>
+#include "common.h"
+#include "modeBase.h"
+#include "cellData.h"
+#include "cellDefinition.h"
 
 struct GridMode : ModeBase {
 private:
-	void static DrawCellPercentage(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2);
-	void static DrawCellValue(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2);
-	void static DrawCellVelocity(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2);
-	void static DrawCellNumber(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2);
-	void static DrawCellBipolarValue(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2);
+	mutable char NumToStrBuf[20]; // for storing conversion results
 
-	void DrawCell(CellData* cell, bool selected, int x1, int y1, int x2, int y2);
+	void DrawCellPercentage(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const;
+	void DrawCellValue(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const;
+	void DrawCellVelocity(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const;
+	void DrawCellNumber(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const;
+	void DrawCellBipolarValue(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const;
+
+	void FixFloatBuf() const;
+	void DrawCell(const CellData& cell, bool selected, int x1, int y1, int x2, int y2) const;
 
 public:
 	static constexpr int CellSize = 12;
@@ -24,20 +28,23 @@ public:
 	static constexpr int SelectedParameterColor = 15;
 	static constexpr int UnselectedParameterColor = 5;
 
-	CellCoords SelectedCell { 0, 0 };
-	CellCoords CurrentStep { 3, 1 }; // TODO:  move this to Sequencer and set real defaults
+	CellCoords SelectedCell;
+	CellCoords CurrentStep;  // TODO:  move this to Sequencer and set real defaults
 	Point GridPosition { ModeAreaX, 2 };
 	int SelectedParameterIndex = 0;
 	bool Editable = true;
 
-	Bounds CellCoordsToBounds(CellCoords coords);
-	void DrawIcon(int x, int y, int color) override;
-	void Draw() override;
-	void DrawCells();
-	void DrawInitialCellBorder();
-	void DrawSelectedCellBorder();
-	void DrawBullet(int x, int y, int color);
-	void DrawParamLine(int paramIndex, int top);
-	void DrawParams();
-	void DrawHelpSection();
+	GridMode();
+	Bounds CellCoordsToBounds(const CellCoords& coords) const;
+	void DrawIcon(int x, int y, int color) const override;
+	void Draw() const override;
+	void DrawCells() const;
+	void DrawInitialCellBorder() const;
+	void DrawSelectedCellBorder() const;
+	void DrawBullet(int x, int y, int color) const;
+	void DrawParamLine(int paramIndex, int top) const;
+	void DrawParamLineValue(int x, int y, int color, CellValue cv, const CellDefinition& cd) const;
+	void DrawParams() const;
+	void DrawHelpSection() const;
+
 };

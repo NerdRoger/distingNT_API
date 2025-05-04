@@ -1,4 +1,4 @@
-#include <modeSelector.h>
+#include "modeSelector.h"
 
 ModeSelector::ModeSelector() {
 	SelectedMode = &Grid;

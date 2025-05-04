@@ -1,12 +1,12 @@
 #pragma once
-
-#include <stddef.h>
+#include <math.h>
 
 struct HelpTextHelper {
-	static const char* HelpText;
-	static int DurationFrames;
-	static int RemainingDuration;
+	static constexpr int DurationFrames = 90;
 
-	static void DisplayHelpText(char* text);
-	static bool Draw();
+	const char* HelpText = NULL;
+	int RemainingDuration = 0;
+
+	void DisplayHelpText(char* text);
+	bool Draw();
 };
