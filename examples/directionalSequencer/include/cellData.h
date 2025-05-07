@@ -1,5 +1,8 @@
 #pragma once
 #include <stdint.h>
+#include "cellDefinition.h"
+
+struct DirectionalSequencer;
 
 struct CellData {
 private:
@@ -23,42 +26,8 @@ private:
 	// or maybe just make some of the others bigger???
 
 public:
-	uint8_t	GetDirection() const;
-	void SetDirection(uint8_t val);
+	// methods here take a sequencer reference, because we don't want to carry that per cell
+	float GetField(const DirectionalSequencer& alg, CellDataType ct) const;
+	void SetField(const DirectionalSequencer& alg, CellDataType ct, float val);
 
-	float GetStepValue() const;
-	void SetStepValue(float val);
-
-	uint8_t GetVelocity() const;
-	void SetVelocity(uint8_t val);
-
-	uint8_t GetProbability() const;
-	void SetProbability(uint8_t val);
-
-	uint8_t GetRatchetCount() const;
-	void SetRatchetCount(uint8_t val);
-
-	uint8_t GetRestAfter() const;
-	void SetRestAfter(uint8_t val);
-
-	uint8_t GetGateLength() const;
-	void SetGateLength(uint8_t val);
-
-	uint8_t GetDriftProbability() const;
-	void SetDriftProbability(uint8_t val);
-
-	float GetMaxDriftAmount() const;
-	void SetMaxDriftAmount(float val);
-
-	uint8_t GetRepeatCount() const;
-	void SetRepeatCount(uint8_t val);
-
-	uint8_t GetGlidePercent() const;
-	void SetGlidePercent(uint8_t val);
-
-	float GetAccumulatorAdd() const;
-	void SetAccumulatorAdd(float val);
-
-	uint8_t GetAccumulatorTimes() const;
-	void SetAccumulatorTimes(uint8_t val);
 };

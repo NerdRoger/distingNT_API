@@ -8,6 +8,14 @@ constexpr uint8_t GridSizeY = 4;
 struct CellCoords {
 	uint8_t x;
 	uint8_t y;
+
+	bool operator==(const CellCoords& other) const {
+		return x == other.x && y == other.y;
+	}
+	
+	bool operator!=(const CellCoords& other) const {
+		return x != other.x || y != other.y;
+	}	
 };
 
 struct Point {
@@ -24,15 +32,23 @@ struct Bounds {
 
 template <typename T>
 inline constexpr T min(T a, T b) {
-    return (a < b) ? a : b;
+	return (a < b) ? a : b;
 }
 
 template <typename T>
 inline constexpr T max(T a, T b) {
-    return (a > b) ? a : b;
+	return (a > b) ? a : b;
 }
 
 template <typename T>
 inline constexpr T clamp(T val, T lo, T hi) {
-    return (val < lo) ? lo : (val > hi) ? hi : val;
+	return (val < lo) ? lo : (val > hi) ? hi : val;
+}
+
+template <typename T>
+inline constexpr T wrap(T val, T lo, T hi) {
+	const T range = hi - lo + 1;
+	val = (val - lo) % range;
+	if (val < 0) val += range;
+	return val + lo;
 }

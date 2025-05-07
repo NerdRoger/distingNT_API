@@ -1,11 +1,12 @@
 #pragma once
+#include "ownedBase.h"
 #include "modeBase.h"
 #include "gridMode.h"
 #include "quantizerMode.h"
 #include "settingsMode.h"
 #include "userTriggersMode.h"
 
-struct ModeSelector {
+struct ModeSelector : OwnedBase {
 
 	static constexpr int SelectedColor = 15;
 	static constexpr int UnselectedColor = 5;
@@ -18,6 +19,7 @@ struct ModeSelector {
 	ModeBase* SelectedMode;
 	ModeSelector();
 	void SelectModeByIndex(int index);
-	void Draw();
+	void Draw() const;
+	virtual void Initialize(DirectionalSequencer& alg) override;
 };
 

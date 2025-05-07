@@ -3,7 +3,7 @@
 #include "helpTextHelper.h"
 
 
-void HelpTextHelper::DisplayHelpText(char* text) {
+void HelpTextHelper::DisplayHelpText(const char* text) {
 	HelpText = text;
 	RemainingDuration = DurationFrames;
 }

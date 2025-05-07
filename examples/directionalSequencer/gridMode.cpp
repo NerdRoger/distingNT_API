@@ -1,20 +1,26 @@
 #include <stdio.h>
 #include <math.h>
 #include <distingnt/api.h>
+#include "common.h"
 #include "gridMode.h"
 #include "persistentData.h"
 #include "helpTextHelper.h"
-#include "directionalSequencerAlgorithm.h"
+#include "directionalSequencer.h"
+
+// TODO:  remove this
+float p2, p3;
+const char* str;
 
 
 GridMode::GridMode() {
 	// TODO:  make these sensible
 	CurrentStep = { .x = 3, .y = 3};
 	SelectedCell = { .x = 7, .y = 0};
-	SelectedParameterIndex = 1;
+	SelectedParameterIndex = CellDataType::Direction;
 }
 
 
+// TODO:  may not be needed once Os corrects the precision bug in NT_floatToString
 void GridMode::FixFloatBuf() const {
 	// find the null terminator
 	unsigned int nt;
@@ -58,6 +64,22 @@ void GridMode::DrawIcon(int x, int y, int color) const {
 
 
 void GridMode::Draw() const {
+
+	NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
+	NT_floatToString(&NumToStrBuf[0], p2);
+	NT_drawText(0, 10, NumToStrBuf, 15);
+	NT_floatToString(&NumToStrBuf[0], p3);
+	NT_drawText(0, 20, NumToStrBuf, 15);
+	NT_floatToString(&NumToStrBuf[0], ParamEditRaw);
+	NT_drawText(0, 30, NumToStrBuf, 15);
+
+	NT_intToString(&NumToStrBuf[0], AlgorithmInstance->TotalMs);
+	NT_drawText(0, 40, NumToStrBuf, 15);
+
+	NT_intToString(&NumToStrBuf[0], AlgorithmInstance->InternalFrameCount);
+	NT_drawText(0, 50, NumToStrBuf, 15);
+
+
 	DrawCells();
 	DrawInitialCellBorder();
 	DrawSelectedCellBorder();
@@ -81,7 +103,7 @@ void GridMode::DrawCells() const {
 			if (current) {
 					NT_drawShapeI(kNT_box, cb.x1 + 1, cb.y1 + 1, cb.x2 - 1, cb.y2 - 1, 15);
 			}
-			auto cell = DirectionalSequencerAlgorithm::Instance->Persist.Cells[x][y];
+			const auto& cell = AlgorithmInstance->Persist.Cells[x][y];
 			DrawCell(cell, selected, cb.x1, cb.y1, cb.x2, cb.y2);
 
 			// draw the cell border
@@ -93,7 +115,7 @@ void GridMode::DrawCells() const {
 
 
 void GridMode::DrawInitialCellBorder() const {
-	auto cb = CellCoordsToBounds(DirectionalSequencerAlgorithm::Instance->Persist.InitialStep);
+	auto cb = CellCoordsToBounds(AlgorithmInstance->Persist.InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
 	auto marqueeColor = CellBorderColor + 5;
 	for (int x = cb.x1; x <= cb.x2; x+=2)	{
@@ -112,7 +134,7 @@ void GridMode::DrawSelectedCellBorder() const {
 	auto color = Editable ? EditableCellBorderColor : NonEditableCellBorderColor;
 	NT_drawShapeI(kNT_box, cb.x1 - 2, cb.y1 - 2, cb.x2 + 2, cb.y2 + 2, NonEditableCellBorderColor);
 	NT_drawShapeI(kNT_box, cb.x1 - 1, cb.y1 - 1, cb.x2 + 1, cb.y2 + 1, color);
-	auto& initial = DirectionalSequencerAlgorithm::Instance->Persist.InitialStep;
+	auto& initial = AlgorithmInstance->Persist.InitialStep;
 	if (SelectedCell.x != initial.x || SelectedCell.y != initial.y) {
 		NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, 0);
 	}
@@ -131,8 +153,8 @@ void GridMode::DrawParamLine(int paramIndex, int top) const {
 	auto paramNameX = paramListX + 5;
 	auto paramValueX = paramListX + 5 + 70;
 
-	auto lineHeight = 10;
-	auto yoffset = (top - 1) * lineHeight + 2;
+	auto lineHeight = 10;  // TODO:  look for variables like this one that can become constants
+	auto yoffset = (top) * lineHeight + 2;
 	auto y = lineHeight * (paramIndex + 1) - yoffset;
 
 	auto selected = paramIndex == SelectedParameterIndex;
@@ -141,73 +163,73 @@ void GridMode::DrawParamLine(int paramIndex, int top) const {
 		DrawBullet(paramListX, y - 5, color);
 	}
 
-	// TODO:  fix this to draw the parameter values
-	auto idx = static_cast<CellValue>(paramIndex);
-	const auto& cd = DirectionalSequencerAlgorithm::Instance->CellDefs[idx];
+	auto idx = static_cast<CellDataType>(paramIndex);
+	const auto& cd = AlgorithmInstance->CellDefs[idx];
 	NT_drawText(paramNameX, y, cd.Name, color);
 	DrawParamLineValue(paramValueX, y, color, idx, cd);
 }
 
 
-void GridMode::DrawParamLineValue(int x, int y, int color, CellValue cv, const CellDefinition& cd) const {
-	auto& cell = DirectionalSequencerAlgorithm::Instance->Persist.Cells[SelectedCell.x][SelectedCell.y];
-	switch (cv)
+void GridMode::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const {
+	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+	float fval = cell.GetField(*AlgorithmInstance, ct);
+	int ival = static_cast<int>(fval);
+	switch (ct)
 	{
-		using enum CellValue;
+		using enum CellDataType;
+		// TODO:  consolidate cases once this is working
 		case Direction:
-			// TODO:  replace this with the arrow glyph
-			NT_intToString(&NumToStrBuf[0], cell.GetDirection());
-			NT_drawText(x, y, NumToStrBuf, color);
+			DrawDirectionArrow(ival, x - 3, y - 10, color);
 			break;
 		case Value:
-			NT_floatToString(&NumToStrBuf[0], cell.GetStepValue(), cd.Precision);
+			NT_floatToString(&NumToStrBuf[0], fval, cd.Precision);
 			FixFloatBuf();
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Velocity:
-			NT_intToString(&NumToStrBuf[0], cell.GetVelocity());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Probability:
-			NT_intToString(&NumToStrBuf[0], cell.GetProbability());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Ratchets:
-			NT_intToString(&NumToStrBuf[0], cell.GetRatchetCount());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case RestAfter:
-			NT_intToString(&NumToStrBuf[0], cell.GetRestAfter());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case GateLength:
-			NT_intToString(&NumToStrBuf[0], cell.GetGateLength());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case DriftProb:
-			NT_intToString(&NumToStrBuf[0], cell.GetDriftProbability());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case MaxDrift:
-			NT_floatToString(&NumToStrBuf[0], cell.GetMaxDriftAmount(), cd.Precision);
+			NT_floatToString(&NumToStrBuf[0], fval, cd.Precision);
 			FixFloatBuf();
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Repeats:
-			NT_intToString(&NumToStrBuf[0], cell.GetRepeatCount());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case Glide:
-			NT_intToString(&NumToStrBuf[0], cell.GetGlidePercent());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case AccumAdd:
-			NT_floatToString(&NumToStrBuf[0], cell.GetAccumulatorAdd(), cd.Precision);
+			NT_floatToString(&NumToStrBuf[0], fval, cd.Precision);
 			FixFloatBuf();
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		case AccumTimes:
-			NT_intToString(&NumToStrBuf[0], cell.GetAccumulatorTimes());
+			NT_intToString(&NumToStrBuf[0], ival);
 			NT_drawText(x, y, NumToStrBuf, color);
 			break;
 		default:
@@ -217,11 +239,10 @@ void GridMode::DrawParamLineValue(int x, int y, int color, CellValue cv, const C
 
 
 void GridMode::DrawParams() const {
-	auto top = SelectedParameterIndex - 2;
-	if (top < 1) {
-		top = 1;
-	}
-	for (int i = 0; i < DirectionalSequencerAlgorithm::Instance->CellDefs.Count; i++) {
+	auto top = max(SelectedParameterIndex - 2, 0);
+	auto paramCount = AlgorithmInstance->CellDefs.Count;
+	top = min(top, paramCount - 5);
+	for (int i = top; i < top + 5; i++) {
 		DrawParamLine(i, top);
 	}
 }
@@ -229,7 +250,8 @@ void GridMode::DrawParams() const {
 
 void GridMode::DrawHelpSection() const {
 	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
-	if (!DirectionalSequencerAlgorithm::Instance->HelpText.Draw()) {
+	AlgorithmInstance->HelpText.Draw();
+	if (!AlgorithmInstance->HelpText.Draw()) {
 		if (Editable) {
 			NT_drawText(142, 58, "Q: Lock, L: Set Start", 15, kNT_textLeft, kNT_textTiny);
 		} else {
@@ -245,11 +267,10 @@ void GridMode::DrawHelpSection() const {
 }
 
 
-void GridMode::DrawCellPercentage(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const {
+void GridMode::DrawCellPercentage(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	auto color = selected ? CellBrightColor : CellDimColor;
 	auto size = CellSize - 3;
-	float fval = val / pow(10, precision);
-	auto scaled = fval * size / 100.0f;
+	auto scaled = val * size / 100.0f;
 	auto full = static_cast<int>(scaled);
 	auto frac = scaled - full;
 	auto fracColor = static_cast<int>(frac * color);
@@ -266,18 +287,18 @@ void GridMode::DrawCellPercentage(int16_t val, uint8_t precision, bool selected,
 }
 
 
-void GridMode::DrawCellValue(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const {
-	DrawCellPercentage(val * 10, precision, selected, x1, y1, x2, y2);
+void GridMode::DrawCellValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
+	DrawCellPercentage(val * 10, selected, x1, y1, x2, y2);
 }
 
 
-void GridMode::DrawCellVelocity(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const {
+void GridMode::DrawCellVelocity(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	// convert velocity to a percentage
-	DrawCellPercentage(val / 1.27, precision, selected, x1, y1, x2, y2);
+	DrawCellPercentage(val / 1.27, selected, x1, y1, x2, y2);
 }
 
 
-void GridMode::DrawCellNumber(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const {
+void GridMode::DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2) const {
 	if (val >= 0 && val <= 9) {
 		auto color = selected ? CellBrightColor : CellDimColor;
 		int xoff = val == 1 ? 1 : 0;
@@ -288,12 +309,11 @@ void GridMode::DrawCellNumber(int16_t val, uint8_t precision, bool selected, int
 }
 
 
-void GridMode::DrawCellBipolarValue(int16_t val, uint8_t precision, bool selected, int x1, int y1, int x2, int y2) const {
+void GridMode::DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const {
 	if (val == 0) return;
 	auto color = selected ? CellBrightColor : CellDimColor;
 	int size = (CellSize - 3 + 1) / 2;
-	float fval = val / pow(10, precision);
-	auto scaled = fval * size;
+	auto scaled = val * size;
 	auto absval = abs(scaled);
 	auto full = static_cast<int>(absval);
 	auto frac = absval - full;
@@ -319,49 +339,239 @@ void GridMode::DrawCellBipolarValue(int16_t val, uint8_t precision, bool selecte
 
 
 void GridMode::DrawCell(const CellData& cell, bool selected, int x1, int y1, int x2, int y2) const {
+	using enum CellDataType;
+	float val = cell.GetField(*AlgorithmInstance, SelectedParameterIndex);
 	switch (SelectedParameterIndex)	{
-		case 0:
-			// TODO:  update to draw the glyph
-			DrawCellNumber(cell.GetDirection(), 0, selected, x1, y1, x2, y2);
+		case Direction:
+			DrawDirectionArrow(val, x1, y1, selected ? CellBrightColor : CellDimColor);
 			break;
-		case 1:
-			DrawCellValue(cell.GetStepValue(), 0, selected, x1, y1, x2, y2);
+		case Value:
+			DrawCellValue(val, selected, x1, y1, x2, y2);
 			break;
-		case 2:
-			DrawCellVelocity(cell.GetVelocity(), 0, selected, x1, y1, x2, y2);
+		case Velocity:
+			DrawCellVelocity(val, selected, x1, y1, x2, y2);
 			break;
-		case 3:
-			DrawCellPercentage(cell.GetProbability(), 0, selected, x1, y1, x2, y2);
+		case Probability:
+			DrawCellPercentage(val, selected, x1, y1, x2, y2);
 			break;
-		case 4:
-			DrawCellNumber(cell.GetRatchetCount(), 0, selected, x1, y1, x2, y2);
+		case Ratchets:
+			DrawCellNumber(val, selected, x1, y1, x2, y2);
 			break;
-		case 5:
-			DrawCellNumber(cell.GetRestAfter(), 0, selected, x1, y1, x2, y2);
+		case RestAfter:
+			DrawCellNumber(val, selected, x1, y1, x2, y2);
 			break;
-		case 6:
-			DrawCellPercentage(cell.GetGateLength(), 0, selected, x1, y1, x2, y2);
+		case GateLength:
+			DrawCellPercentage(val, selected, x1, y1, x2, y2);
 			break;
-		case 7:
-			DrawCellPercentage(cell.GetDriftProbability(), 0, selected, x1, y1, x2, y2);
+		case DriftProb:
+			DrawCellPercentage(val, selected, x1, y1, x2, y2);
 			break;
-		case 8:
-			DrawCellValue(cell.GetMaxDriftAmount(), 0, selected, x1, y1, x2, y2);
+		case MaxDrift:
+			DrawCellValue(val, selected, x1, y1, x2, y2);
 			break;
-		case 9:
-			DrawCellNumber(cell.GetRepeatCount(), 0, selected, x1, y1, x2, y2);
+		case Repeats:
+			DrawCellNumber(val, selected, x1, y1, x2, y2);
 			break;
-		case 10:
-			DrawCellPercentage(cell.GetGlidePercent(), 0, selected, x1, y1, x2, y2);
+		case Glide:
+			DrawCellPercentage(val, selected, x1, y1, x2, y2);
 			break;
-		case 11:
-			DrawCellBipolarValue(cell.GetAccumulatorAdd(), 0, selected, x1, y1, x2, y2);
+		case AccumAdd:
+			DrawCellBipolarValue(val, selected, x1, y1, x2, y2);
 			break;
-		case 12:
-			DrawCellNumber(cell.GetAccumulatorTimes(), 0, selected, x1, y1, x2, y2);
+		case AccumTimes:
+			DrawCellNumber(val, selected, x1, y1, x2, y2);
 			break;
-		
 		default:
 			break;
 	}
+}
+
+
+void GridMode::DrawDirectionArrow(unsigned int dir, int x, int y, int color) const {
+	switch (dir)
+	{
+		case 1: // North
+			NT_drawShapeI(kNT_line, x + 6, y + 2, x + 6, y + 10, color);
+			NT_drawShapeI(kNT_line, x + 5, y + 3, x + 7, y +  3, color);
+			NT_drawShapeI(kNT_line, x + 4, y + 4, x + 8, y +  4, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 5, x + 9, y +  5, color);
+			break;
+		case 2: // NorthEast
+			NT_drawShapeI(kNT_line, x + 3, y + 9, x + 9, y + 3, color);
+			NT_drawShapeI(kNT_line, x + 5, y + 3, x + 9, y + 3, color);
+			NT_drawShapeI(kNT_line, x + 6, y + 4, x + 9, y + 4, color);
+			NT_drawShapeI(kNT_line, x + 9, y + 3, x + 9, y + 7, color);
+			NT_drawShapeI(kNT_line, x + 8, y + 3, x + 8, y + 6, color);
+			break;
+		case 3: // East
+			NT_drawShapeI(kNT_line, x + 2, y + 6, x + 10, y + 6, color);
+			NT_drawShapeI(kNT_line, x + 9, y + 5, x +  9, y + 7, color);
+			NT_drawShapeI(kNT_line, x + 8, y + 4, x +  8, y + 8, color);
+			NT_drawShapeI(kNT_line, x + 7, y + 3, x +  7, y + 9, color);
+			break;
+		case 4: // SouthEast
+			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 9, y + 9, color);
+			NT_drawShapeI(kNT_line, x + 9, y + 5, x + 9, y + 9, color);
+			NT_drawShapeI(kNT_line, x + 8, y + 6, x + 8, y + 9, color);
+			NT_drawShapeI(kNT_line, x + 5, y + 9, x + 9, y + 9, color);
+			NT_drawShapeI(kNT_line, x + 6, y + 8, x + 9, y + 8, color);
+			break;
+		case 5: // South
+			NT_drawShapeI(kNT_line, x + 6, y + 2, x + 6, y + 10, color);
+			NT_drawShapeI(kNT_line, x + 5, y + 9, x + 7, y +  9, color);
+			NT_drawShapeI(kNT_line, x + 4, y + 8, x + 8, y +  8, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 7, x + 9, y +  7, color);
+			break;
+		case 6: // SouthWest
+			NT_drawShapeI(kNT_line, x + 3, y + 9, x + 9, y + 3, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 5, x + 3, y + 9, color);
+			NT_drawShapeI(kNT_line, x + 4, y + 6, x + 4, y + 9, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 8, x + 6, y + 8, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 9, x + 7, y + 9, color);
+			break;
+		case 7: // West
+			NT_drawShapeI(kNT_line, x + 2, y + 6, x + 10, y + 6, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 5, x +  3, y + 7, color);
+			NT_drawShapeI(kNT_line, x + 4, y + 4, x +  4, y + 8, color);
+			NT_drawShapeI(kNT_line, x + 5, y + 3, x +  5, y + 9, color);
+			break;
+		case 8: // NorthWest
+			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 9, y + 9, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 7, y + 3, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 4, x + 6, y + 4, color);
+			NT_drawShapeI(kNT_line, x + 3, y + 3, x + 3, y + 7, color);
+			NT_drawShapeI(kNT_line, x + 4, y + 3, x + 4, y + 6, color);
+			break;
+		default:
+			break;
+	}
+}
+
+// calculate an epsilon for a given cell parameter that we can add to our value to put it exactly in between pot "ticks"
+float GridMode::CalculateEpsilon(const CellDefinition& cd) const {
+	return 0.5 * static_cast<int16_t>(pow(10, -cd.Precision));
+}
+
+
+void GridMode::LoadParamForEditing() {
+	const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+	ParamEditRaw = cell.GetField(*AlgorithmInstance, SelectedParameterIndex) + CalculateEpsilon(cd);
+}
+
+
+void GridMode::Encoder1Turn(int8_t x) {
+	SelectedCell.x = wrap(SelectedCell.x + x, 0, GridSizeX - 1);
+	LoadParamForEditing();
+}
+
+
+void GridMode::Encoder2Turn(int8_t x) {
+	SelectedCell.y = wrap(SelectedCell.y + x, 0, GridSizeY - 1);
+	LoadParamForEditing();
+}
+
+
+void GridMode::Encoder2ShortPress() {
+	Editable = !Editable;
+}
+
+
+void GridMode::Encoder2LongPress() {
+	AlgorithmInstance->Persist.InitialStep = SelectedCell;
+}
+
+
+void GridMode::Pot2Turn(float val) {
+	p2 = val;
+
+	// for our purposes here, we want [0..1), not [0..1]
+	val = clamp(val, 0.0f, 0.999f);
+	auto old = SelectedParameterIndex;
+	auto idx = val * AlgorithmInstance->CellDefs.Count;
+	SelectedParameterIndex = static_cast<CellDataType>(idx);
+	if (SelectedParameterIndex != old) {
+		LoadParamForEditing();
+		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
+	}
+}
+
+void GridMode::Pot3Turn(float val) {
+	p3 = val;
+
+	if (Editable) {
+		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+		auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+		AlgorithmInstance->Input.UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max);
+		cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
+		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
+	}
+}
+
+
+void GridMode::Pot3ShortPress() {
+	// only change values if we are editable
+	if (Editable) {
+		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+		auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
+		cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
+		// default state for direction should give us an initial direction (east)
+		if (SelectedParameterIndex == CellDataType::Direction) {
+			if (AlgorithmInstance->Persist.InitialStep == SelectedCell) {
+				cell.SetField(*AlgorithmInstance, SelectedParameterIndex, 3);
+			}
+		}
+		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
+		LoadParamForEditing();
+	}
+}
+
+
+void GridMode::Pot3LongPress() {
+	if (Editable) {
+		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
+		for (int x = 0; x < GridSizeX; x++) {
+			for (int y = 0; y < GridSizeY; y++) {
+				auto& cell = AlgorithmInstance->Persist.Cells[x][y];
+				cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
+			}
+		}
+		// default state for direction should give us an initial direction (east)
+		if (SelectedParameterIndex == CellDataType::Direction) {
+			auto& cell = AlgorithmInstance->Persist.Cells[AlgorithmInstance->Persist.InitialStep.x][AlgorithmInstance->Persist.InitialStep.y];
+			cell.SetField(*AlgorithmInstance, SelectedParameterIndex, 3);
+		}
+		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
+		LoadParamForEditing();
+	}
+}
+
+
+void GridMode::FixupPotValues(_NT_float3& pots) {
+	// calculate an epsilon that we can add to our value to put it exactly in between pot "ticks"
+	// this way we aren't right on the edge, where a slight pot bump could change the value
+	auto epsilon2 = 0.5 / AlgorithmInstance->CellDefs.Count;
+	pots[1] = static_cast<float>(SelectedParameterIndex) / AlgorithmInstance->CellDefs.Count + epsilon2;
+
+	const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+	auto range = cd.Max - cd.Min;
+	pots[2] = cell.GetField(*AlgorithmInstance, SelectedParameterIndex) / range;
+
+	// -- calculate p2
+	// local p2 = (self.SelectedParameter - 1) / #CellParameters
+	// -- calculate p3
+	// local cp = CellParameters[self.SelectedParameter]
+	// local val = Sequencer.Cells[cp.ValueField][(self.SelectedCell.y-1)*GRIDSIZE_X + self.SelectedCell.x]
+	// local range = cp.Max - cp.Min
+	// local p3 = val / range
+
+}
+
+
+void GridMode::Activate() {
+	LoadParamForEditing();
 }
