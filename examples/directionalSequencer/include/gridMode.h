@@ -16,11 +16,10 @@ private:
 	static constexpr int SelectedParameterColor = 15;
 	static constexpr int UnselectedParameterColor = 5;
 
-	mutable char NumToStrBuf[20]; // for storing conversion results
 	Point GridPosition { ModeAreaX, 2 };
 	CellDataType SelectedParameterIndex = CellDataType::Direction;
-	bool Editable = true;
-	float ParamEditRaw;
+	float ParamEditRaw = 0;
+	float SelectedParameterIndexRaw = 0;
 
 	Bounds CellCoordsToBounds(const CellCoords& coords) const;
 
@@ -30,7 +29,6 @@ private:
 	void DrawCellNumber(int16_t val, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCellBipolarValue(float val, bool selected, int x1, int y1, int x2, int y2) const;
 
-	void FixFloatBuf() const;
 	void DrawCell(const CellData& cell, bool selected, int x1, int y1, int x2, int y2) const;
 	void DrawCells() const;
 	void DrawInitialCellBorder() const;

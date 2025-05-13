@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <distingnt/api.h>
 
 constexpr uint8_t GridSizeX = 8;
 constexpr uint8_t GridSizeY = 4;
@@ -51,4 +52,14 @@ inline constexpr T wrap(T val, T lo, T hi) {
 	val = (val - lo) % range;
 	if (val < 0) val += range;
 	return val + lo;
+}
+
+inline constexpr uint16_t CalculateScaling(int scale) {
+	switch (scale)
+	{
+		case kNT_scaling10:   return 10;
+		case kNT_scaling100:  return 100;
+		case kNT_scaling1000: return 1000;
+		default: return 1;
+	}
 }

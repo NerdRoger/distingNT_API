@@ -3,6 +3,9 @@
         "cmath": "cpp",
         "type_traits": "cpp",
         "typeinfo": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "cstdlib": "cpp",
+        "cstddef": "cpp",
+        "cstdint": "cpp"
     }
 }

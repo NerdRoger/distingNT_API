@@ -46,7 +46,8 @@ void InputHandler::Encoder2LongPress() {
 
 
 void InputHandler::Pot1Turn(float val) {
-	// TODO:  wire up to mode selector
+	int v = val * ARRAY_SIZE(AlgorithmInstance->Selector.Modes);
+	AlgorithmInstance->Selector.SelectModeByIndex(v);	
 
 	// keep track of the pot position
 	PreviousPotValues[0] = val;
@@ -138,7 +139,7 @@ void InputHandler::FixupPotValues(_NT_float3& pots) {
 }
 
 
-void InputHandler::UpdateValueWithPot(int potIndex, float currentPotVal, float& value, int min, int max) {
+void InputHandler::UpdateValueWithPot(int potIndex, float currentPotVal, float& value, float min, float max) {
 	// get the change in pot position since our last known value
 	auto dx = currentPotVal - PreviousPotValues[potIndex];
 

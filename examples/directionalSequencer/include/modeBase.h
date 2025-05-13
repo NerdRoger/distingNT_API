@@ -4,8 +4,22 @@
 #include "ownedBase.h"
 
 struct ModeBase : OwnedBase {
+private:
+	static constexpr int EditBoxUnselectedBackgroundColor = 1;
+	static constexpr int EditBoxSelectedBackgroundColor = 1;
+	static constexpr int EditBoxUnselectedTextColor = 8;
+	static constexpr int EditBoxSelectedTextColor = 15;
+	static constexpr int EditBoxSelectedBorderColor = 15;
+
 protected:
 	static constexpr int ModeAreaX = 50;
+	mutable char NumToStrBuf[20]; // for storing conversion results
+
+	bool Editable = true;
+
+	void FixFloatBuf() const;
+	void AddSuffixToBuf(const char* suffix) const;
+	void DrawEditBox(uint8_t x, uint8_t y, uint8_t width, const char* text, bool selected, bool editable) const;
 
 public:
 	virtual void DrawIcon(int x, int y, int color) const { }

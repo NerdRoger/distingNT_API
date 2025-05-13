@@ -20,29 +20,6 @@ GridMode::GridMode() {
 }
 
 
-// TODO:  may not be needed once Os corrects the precision bug in NT_floatToString
-void GridMode::FixFloatBuf() const {
-	// find the null terminator
-	unsigned int nt;
-	for(nt = 0; nt < sizeof(NumToStrBuf); nt++) {
-		if (NumToStrBuf[nt] == '\0')
-			break;
-	}
-	// walk backward from it, setting any '0' to null
-	unsigned int end;
-	for(end = nt - 1; end > 0; end--) {
-		if (NumToStrBuf[end] == '0') {
-			NumToStrBuf[end] = '\0';
-		} else {
-			break;
-		}
-	}
-	// if we backed up all the way to the decimal point, get rid of that too
-	if (NumToStrBuf[end] == '.')
-		NumToStrBuf[end] = '\0';
-}
-
-
 Bounds GridMode::CellCoordsToBounds(const CellCoords& coords) const {
 	Bounds result; // TODO:  should this be preallocated?
 	result.x1 = coords.x * CellSize + GridPosition.x;
@@ -66,18 +43,15 @@ void GridMode::DrawIcon(int x, int y, int color) const {
 void GridMode::Draw() const {
 
 	NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
-	NT_floatToString(&NumToStrBuf[0], p2);
+	NT_floatToString(&NumToStrBuf[0], p2, 3);
 	NT_drawText(0, 10, NumToStrBuf, 15);
-	NT_floatToString(&NumToStrBuf[0], p3);
+	NT_floatToString(&NumToStrBuf[0], p3, 3);
 	NT_drawText(0, 20, NumToStrBuf, 15);
-	NT_floatToString(&NumToStrBuf[0], ParamEditRaw);
+	NT_floatToString(&NumToStrBuf[0], SelectedParameterIndexRaw, 3);
 	NT_drawText(0, 30, NumToStrBuf, 15);
 
 	NT_intToString(&NumToStrBuf[0], AlgorithmInstance->TotalMs);
 	NT_drawText(0, 40, NumToStrBuf, 15);
-
-	NT_intToString(&NumToStrBuf[0], AlgorithmInstance->InternalFrameCount);
-	NT_drawText(0, 50, NumToStrBuf, 15);
 
 
 	DrawCells();
@@ -151,7 +125,7 @@ void GridMode::DrawBullet(int x, int y, int color) const {
 void GridMode::DrawParamLine(int paramIndex, int top) const {
 	auto paramListX = GridPosition.x + (GridSizeX * CellSize) + 5;
 	auto paramNameX = paramListX + 5;
-	auto paramValueX = paramListX + 5 + 70;
+	auto paramValueX = paramListX + 5 + 68;
 
 	auto lineHeight = 10;  // TODO:  look for variables like this one that can become constants
 	auto yoffset = (top) * lineHeight + 2;
@@ -173,6 +147,14 @@ void GridMode::DrawParamLine(int paramIndex, int top) const {
 void GridMode::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const {
 	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
 	float fval = cell.GetField(*AlgorithmInstance, ct);
+
+
+	// if the value is negativem keep it lined up with the others
+	if (fval < 0) {
+		x -= 6;
+	}
+
+
 	int ival = static_cast<int>(fval);
 	switch (ct)
 	{
@@ -250,7 +232,6 @@ void GridMode::DrawParams() const {
 
 void GridMode::DrawHelpSection() const {
 	NT_drawShapeI(kNT_rectangle, 0, 50, 255, 63, 0);
-	AlgorithmInstance->HelpText.Draw();
 	if (!AlgorithmInstance->HelpText.Draw()) {
 		if (Editable) {
 			NT_drawText(142, 58, "Q: Lock, L: Set Start", 15, kNT_textLeft, kNT_textTiny);
@@ -485,11 +466,10 @@ void GridMode::Encoder2LongPress() {
 void GridMode::Pot2Turn(float val) {
 	p2 = val;
 
-	// for our purposes here, we want [0..1), not [0..1]
-	val = clamp(val, 0.0f, 0.999f);
 	auto old = SelectedParameterIndex;
-	auto idx = val * AlgorithmInstance->CellDefs.Count;
-	SelectedParameterIndex = static_cast<CellDataType>(idx);
+	AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, AlgorithmInstance->CellDefs.Count);
+	SelectedParameterIndexRaw = clamp(SelectedParameterIndexRaw, 0.0f, AlgorithmInstance->CellDefs.Count - 0.001f);
+	SelectedParameterIndex = static_cast<CellDataType>(SelectedParameterIndexRaw);
 	if (SelectedParameterIndex != old) {
 		LoadParamForEditing();
 		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
@@ -497,13 +477,14 @@ void GridMode::Pot2Turn(float val) {
 	}
 }
 
+
 void GridMode::Pot3Turn(float val) {
 	p3 = val;
 
 	if (Editable) {
 		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
 		auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
-		AlgorithmInstance->Input.UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max);
+		AlgorithmInstance->Input.UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
 		cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
 	}
@@ -560,15 +541,6 @@ void GridMode::FixupPotValues(_NT_float3& pots) {
 	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
 	auto range = cd.Max - cd.Min;
 	pots[2] = cell.GetField(*AlgorithmInstance, SelectedParameterIndex) / range;
-
-	// -- calculate p2
-	// local p2 = (self.SelectedParameter - 1) / #CellParameters
-	// -- calculate p3
-	// local cp = CellParameters[self.SelectedParameter]
-	// local val = Sequencer.Cells[cp.ValueField][(self.SelectedCell.y-1)*GRIDSIZE_X + self.SelectedCell.x]
-	// local range = cp.Max - cp.Min
-	// local p3 = val / range
-
 }
 
 

@@ -41,5 +41,5 @@ public:
 
 	void FixupPotValues(_NT_float3& pots);
 
-	void UpdateValueWithPot(int potNum, float currentPotVal, float& value, int min, int max);
+	void UpdateValueWithPot(int potNum, float currentPotVal, float& value, float min, float max);
 };

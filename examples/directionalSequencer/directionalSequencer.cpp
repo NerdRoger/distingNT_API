@@ -3,9 +3,15 @@
 #include <new>
 #include <distingnt/api.h>
 #include "directionalSequencer.h"
+#include "parameterDefinition.h"
+
+DirectionalSequencer::DirectionalSequencer() {
+	parameters = ParameterDefinition::Parameters;
+	parameterPages = &ParameterDefinition::ParameterPages;
+}
 
 void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
-	req.numParameters = ARRAY_SIZE(DirectionalSequencer::Parameters);
+	req.numParameters = ARRAY_SIZE(ParameterDefinition::Parameters);
 	req.sram = sizeof(DirectionalSequencer);
 	req.dram = 0;
 	req.dtc = 0;
@@ -18,8 +24,8 @@ _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorith
 	alg.Input.Initialize(alg);
 	alg.Selector.Initialize(alg);
 	// TODO:  init other objects
-	alg.parameters = DirectionalSequencer::Parameters;
-	alg.parameterPages = &DirectionalSequencer::ParameterPages;
+	// alg.parameters = DirectionalSequencer::Parameters;
+	// alg.parameterPages = &DirectionalSequencer::ParameterPages;
 
 	//PersistData = &alg->Persist;
 	// TODO:  remove dummy data here
