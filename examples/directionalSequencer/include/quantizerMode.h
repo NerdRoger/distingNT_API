@@ -3,13 +3,13 @@
 #include "modeBase.h"
 #include "parameterDefinition.h"
 
+
 struct QuantizerMode : ModeBase {
 private:
 
 	struct Control {
-		char    Name[20];
-		uint8_t ParameterIndex;
-		char    HelpText[45];
+		uint8_t     ParameterIndex;
+		const char* HelpText;
 	};
 
 	static constexpr int ActiveKeyColor = 6;
@@ -18,29 +18,45 @@ private:
 	static constexpr float MaxSliderValue = 10.0f;
 
 	using enum ParameterDefinition::ParameterIndex;
-	static constexpr Control SelectableControls[] {
-    { .Name = "Attenuate", .ParameterIndex = kParamAttenValue,        .HelpText = "  Attenuate the sequence value before quant" },
-    { .Name = "Offset",    .ParameterIndex = kParamOffsetValue,       .HelpText = " Offset the sequence value before quantizing" },
-    { .Name = "Transpose", .ParameterIndex = kParamTranspose,         .HelpText = "   Transpose the sequence after quantizing" },
-    { .Name = "CKey",      .ParameterIndex = kParamQuantWeightC,      .HelpText = "  Adjust the attraction weighting of note C" },
-    { .Name = "CSharpKey", .ParameterIndex = kParamQuantWeightCSharp, .HelpText = "  Adjust the attraction weighting of note C#" },
-    { .Name = "DKey",      .ParameterIndex = kParamQuantWeightD,      .HelpText = "  Adjust the attraction weighting of note D" },
-    { .Name = "DSharpKey", .ParameterIndex = kParamQuantWeightDSharp, .HelpText = "  Adjust the attraction weighting of note D#" },
-    { .Name = "EKey",      .ParameterIndex = kParamQuantWeightE,      .HelpText = "  Adjust the attraction weighting of note E" },
-    { .Name = "FKey",      .ParameterIndex = kParamQuantWeightF,      .HelpText = "  Adjust the attraction weighting of note F" },
-    { .Name = "FSharpKey", .ParameterIndex = kParamQuantWeightFSharp, .HelpText = "  Adjust the attraction weighting of note F#" },
-    { .Name = "GKey",      .ParameterIndex = kParamQuantWeightG,      .HelpText = "  Adjust the attraction weighting of note G" },
-    { .Name = "GSharpKey", .ParameterIndex = kParamQuantWeightGSharp, .HelpText = "  Adjust the attraction weighting of note G#" },
-    { .Name = "AKey",      .ParameterIndex = kParamQuantWeightA,      .HelpText = "  Adjust the attraction weighting of note A" },
-    { .Name = "ASharpKey", .ParameterIndex = kParamQuantWeightASharp, .HelpText = "  Adjust the attraction weighting of note A#" },
-    { .Name = "BKey",      .ParameterIndex = kParamQuantWeightB,      .HelpText = "  Adjust the attraction weighting of note B"	 },
+	static const Control AttenuateValueControl;
+	static const Control OffsetValueControl;
+	static const Control TransposeControl;
+	static const Control WeightCControl;
+	static const Control WeightCSharpControl;
+	static const Control WeightDControl;
+	static const Control WeightDSharpControl;
+	static const Control WeightEControl;
+	static const Control WeightFControl;
+	static const Control WeightFSharpControl;
+	static const Control WeightGControl;
+	static const Control WeightGSharpControl;
+	static const Control WeightAControl;
+	static const Control WeightASharpControl;
+	static const Control WeightBControl;
+
+	const Control* SelectableControls[15] {
+		&AttenuateValueControl,
+		&OffsetValueControl,
+		&TransposeControl,
+		&WeightCControl,
+		&WeightCSharpControl,
+		&WeightDControl,
+		&WeightDSharpControl,
+		&WeightEControl,
+		&WeightFControl,
+		&WeightFSharpControl,
+		&WeightGControl,
+		&WeightGSharpControl,
+		&WeightAControl,
+		&WeightASharpControl,
+		&WeightBControl
 	};
-	
+
 	float SelectedControlIndexRaw = 0.0f;
 	float SelectedControlValueRaw = 0.0f;
-	const Control* SelectedControl = &SelectableControls[0];
+	const Control* SelectedControl = SelectableControls[0];
 
-	static const Control& FindControlByParameterIndex(uint8_t idx);
+	const Control& FindControlByParameterIndex(uint8_t idx) const;
 	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterDefinition::ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const;
 	void DrawParameters() const;
 

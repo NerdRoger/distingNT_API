@@ -6,14 +6,32 @@
 #include "parameterDefinition.h"
 
 
-const QuantizerMode::Control& QuantizerMode::FindControlByParameterIndex(uint8_t idx) {
+using enum ParameterDefinition::ParameterIndex;
+const QuantizerMode::Control QuantizerMode::AttenuateValueControl = { kParamAttenValue,        "  Attenuate the sequence value before quant" };
+const QuantizerMode::Control QuantizerMode::OffsetValueControl    = { kParamOffsetValue,       " Offset the sequence value before quantizing" };
+const QuantizerMode::Control QuantizerMode::TransposeControl      = { kParamTranspose,         "   Transpose the sequence after quantizing" };
+const QuantizerMode::Control QuantizerMode::WeightCControl        = { kParamQuantWeightC,      "  Adjust the attraction weighting of note C" };
+const QuantizerMode::Control QuantizerMode::WeightCSharpControl   = { kParamQuantWeightCSharp, "  Adjust the attraction weighting of note C#" };
+const QuantizerMode::Control QuantizerMode::WeightDControl        = { kParamQuantWeightD,      "  Adjust the attraction weighting of note D" };
+const QuantizerMode::Control QuantizerMode::WeightDSharpControl   = { kParamQuantWeightDSharp, "  Adjust the attraction weighting of note D#" };
+const QuantizerMode::Control QuantizerMode::WeightEControl        = { kParamQuantWeightE,      "  Adjust the attraction weighting of note E" };
+const QuantizerMode::Control QuantizerMode::WeightFControl        = { kParamQuantWeightF,      "  Adjust the attraction weighting of note F" };
+const QuantizerMode::Control QuantizerMode::WeightFSharpControl   = { kParamQuantWeightFSharp, "  Adjust the attraction weighting of note F#" };
+const QuantizerMode::Control QuantizerMode::WeightGControl        = { kParamQuantWeightG,      "  Adjust the attraction weighting of note G" };
+const QuantizerMode::Control QuantizerMode::WeightGSharpControl   = { kParamQuantWeightGSharp, "  Adjust the attraction weighting of note G#" };
+const QuantizerMode::Control QuantizerMode::WeightAControl        = { kParamQuantWeightA,      "  Adjust the attraction weighting of note A" };
+const QuantizerMode::Control QuantizerMode::WeightASharpControl   = { kParamQuantWeightASharp, "  Adjust the attraction weighting of note A#" };
+const QuantizerMode::Control QuantizerMode::WeightBControl        = { kParamQuantWeightB,      "  Adjust the attraction weighting of note B" };
+
+
+const QuantizerMode::Control& QuantizerMode::FindControlByParameterIndex(uint8_t idx) const {
 	for (const auto& ctrl : SelectableControls) {
-		if (ctrl.ParameterIndex == idx) {
-			return ctrl;
+		if (ctrl->ParameterIndex == idx) {
+			return *ctrl;
 		}
 	}
 	// this should not happen, but we gotta satisfy the compiler of that
-	static constexpr Control dummy = { "Unknown", 0xFF, "Invalid parameter index" };
+	static constexpr Control dummy = { 0xFF, "Invalid parameter index" };
 	return dummy;
 }
 
@@ -272,7 +290,7 @@ void QuantizerMode::Pot2Turn(float val) {
 	if (Editable) {
 		AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedControlIndexRaw, 0, ARRAY_SIZE(SelectableControls) - 0.001f);
 		auto old = SelectedControl;
-		SelectedControl = &SelectableControls[static_cast<int>(SelectedControlIndexRaw)];
+		SelectedControl = SelectableControls[static_cast<int>(SelectedControlIndexRaw)];
 		LoadControlForEditing();
 		if (SelectedControl != old) {
 			AlgorithmInstance->HelpText.DisplayHelpText(SelectedControl->HelpText);

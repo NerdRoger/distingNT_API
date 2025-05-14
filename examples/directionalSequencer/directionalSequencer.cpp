@@ -1,4 +1,3 @@
-
 #include <math.h>
 #include <new>
 #include <distingnt/api.h>
