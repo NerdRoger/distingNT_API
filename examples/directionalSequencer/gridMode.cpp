@@ -8,8 +8,8 @@
 #include "directionalSequencer.h"
 
 // TODO:  remove this
-float p2, p3;
-const char* str;
+// float p2, p3;
+// const char* str;
 
 
 GridMode::GridMode() {
@@ -42,16 +42,16 @@ void GridMode::DrawIcon(int x, int y, int color) const {
 
 void GridMode::Draw() const {
 
-	NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
-	NT_floatToString(&NumToStrBuf[0], p2, 3);
-	NT_drawText(0, 10, NumToStrBuf, 15);
-	NT_floatToString(&NumToStrBuf[0], p3, 3);
-	NT_drawText(0, 20, NumToStrBuf, 15);
-	NT_floatToString(&NumToStrBuf[0], SelectedParameterIndexRaw, 3);
-	NT_drawText(0, 30, NumToStrBuf, 15);
+	// NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
+	// NT_floatToString(&NumToStrBuf[0], p2, 3);
+	// NT_drawText(0, 10, NumToStrBuf, 15);
+	// NT_floatToString(&NumToStrBuf[0], p3, 3);
+	// NT_drawText(0, 20, NumToStrBuf, 15);
+	// NT_floatToString(&NumToStrBuf[0], SelectedParameterIndexRaw, 3);
+	// NT_drawText(0, 30, NumToStrBuf, 15);
 
-	NT_intToString(&NumToStrBuf[0], AlgorithmInstance->TotalMs);
-	NT_drawText(0, 40, NumToStrBuf, 15);
+	// NT_intToString(&NumToStrBuf[0], AlgorithmInstance->TotalMs);
+	// NT_drawText(0, 40, NumToStrBuf, 15);
 
 
 	DrawCells();
@@ -464,7 +464,7 @@ void GridMode::Encoder2LongPress() {
 
 
 void GridMode::Pot2Turn(float val) {
-	p2 = val;
+//	p2 = val;
 
 	auto old = SelectedParameterIndex;
 	AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, AlgorithmInstance->CellDefs.Count);
@@ -479,7 +479,7 @@ void GridMode::Pot2Turn(float val) {
 
 
 void GridMode::Pot3Turn(float val) {
-	p3 = val;
+//	p3 = val;
 
 	if (Editable) {
 		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];

@@ -3,7 +3,10 @@
 #include "directionalSequencer.h"
 
 float CellData::GetField(const DirectionalSequencer& alg, CellDataType ct) const {
-	const auto& cd = alg.CellDefs[ct];
+//	const auto& cd = alg.CellDefs[ct];
+
+	auto precision = alg.CellDefs[ct].Precision;
+
 	int result;
 	switch (ct)
 	{
@@ -22,7 +25,7 @@ float CellData::GetField(const DirectionalSequencer& alg, CellDataType ct) const
 		case CellDataType::AccumTimes:  result = AccumulatorTimes; break;
 		default: result = 0; break;
 	}
-	float fresult = static_cast<float>(result) / static_cast<int16_t>(pow(10, cd.Precision));
+	float fresult = static_cast<float>(result) / static_cast<int16_t>(pow(10, precision));
 	return fresult;
 }
 

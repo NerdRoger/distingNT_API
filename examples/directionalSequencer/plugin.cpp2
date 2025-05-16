@@ -1,0 +1,41 @@
+/*
+#include <cstddef>
+#include <stdio.h>
+#include <math.h>
+#include <distingnt/api.h>
+
+#include "common.h"
+#include "ownedBase.h"
+#include "persistentData.h"
+#include "directionalSequencer.h"
+#include "parameterDefinition.h"
+#include "helpTextHelper.h"
+
+#include "inputHandler.h"
+#include "modeSelector.h"
+
+#include "modeBase.h"
+#include "gridMode.h"
+#include "quantizerMode.h"
+#include "settingsMode.h"
+#include "userTriggersMode.h"
+
+#include "cellDefinition.h"
+#include "cellData.h"
+*/
+
+
+
+
+#include "directionalSequencer.cpp"
+#include "parameterDefinition.cpp"
+#include "inputHandler.cpp"
+#include "helpTextHelper.cpp"
+#include "modeSelector.cpp"
+#include "cellData.cpp"
+#include "modeBase.cpp"
+#include "gridMode.cpp"
+#include "quantizerMode.cpp"
+#include "settingsMode.cpp"
+#include "userTriggersMode.cpp"
+
