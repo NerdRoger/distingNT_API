@@ -10,7 +10,7 @@ DirectionalSequencer::DirectionalSequencer() {
 }
 
 void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
-	req.numParameters = ARRAY_SIZE(ParameterDefinition::Parameters);
+	req.numParameters = ParameterDefinition::Count;
 	req.sram = sizeof(DirectionalSequencer);
 	req.dram = 0;
 	req.dtc = 0;
@@ -81,7 +81,12 @@ _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorith
 
 
 void ParameterChanged(_NT_algorithm* self, int p) {
-	// empty for now
+	auto& alg = *static_cast<DirectionalSequencer*>(self);
+	// notify every mode of the parameter change
+	for (size_t i = 0; i < ARRAY_SIZE(alg.Selector.Modes); i++) {
+		auto& mode = *alg.Selector.Modes[i];
+		mode.ParameterChanged(p);
+	}
 }
 
 
@@ -91,7 +96,7 @@ void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 
 	uint32_t samplesPerMs = NT_globals.sampleRate / 1000;
 	uint32_t deltaMs = alg.InternalFrameCount / samplesPerMs;
-	alg.TotalMs += deltaMs;
+  alg.TotalMs += deltaMs;
 
 	// subtract off the number of samples we just added to our running ms counter, to keep InternalFrameCount low
 	alg.InternalFrameCount -= (deltaMs * samplesPerMs);

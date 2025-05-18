@@ -6,28 +6,29 @@
 #include "parameterDefinition.h"
 
 
-using enum ParameterDefinition::ParameterIndex;
-const QuantizerMode::Control QuantizerMode::AttenuateValueControl = { kParamAttenValue,        "  Attenuate the sequence value before quant" };
-const QuantizerMode::Control QuantizerMode::OffsetValueControl    = { kParamOffsetValue,       " Offset the sequence value before quantizing" };
-const QuantizerMode::Control QuantizerMode::TransposeControl      = { kParamTranspose,         "   Transpose the sequence after quantizing" };
-const QuantizerMode::Control QuantizerMode::WeightCControl        = { kParamQuantWeightC,      "  Adjust the attraction weighting of note C" };
-const QuantizerMode::Control QuantizerMode::WeightCSharpControl   = { kParamQuantWeightCSharp, "  Adjust the attraction weighting of note C#" };
-const QuantizerMode::Control QuantizerMode::WeightDControl        = { kParamQuantWeightD,      "  Adjust the attraction weighting of note D" };
-const QuantizerMode::Control QuantizerMode::WeightDSharpControl   = { kParamQuantWeightDSharp, "  Adjust the attraction weighting of note D#" };
-const QuantizerMode::Control QuantizerMode::WeightEControl        = { kParamQuantWeightE,      "  Adjust the attraction weighting of note E" };
-const QuantizerMode::Control QuantizerMode::WeightFControl        = { kParamQuantWeightF,      "  Adjust the attraction weighting of note F" };
-const QuantizerMode::Control QuantizerMode::WeightFSharpControl   = { kParamQuantWeightFSharp, "  Adjust the attraction weighting of note F#" };
-const QuantizerMode::Control QuantizerMode::WeightGControl        = { kParamQuantWeightG,      "  Adjust the attraction weighting of note G" };
-const QuantizerMode::Control QuantizerMode::WeightGSharpControl   = { kParamQuantWeightGSharp, "  Adjust the attraction weighting of note G#" };
-const QuantizerMode::Control QuantizerMode::WeightAControl        = { kParamQuantWeightA,      "  Adjust the attraction weighting of note A" };
-const QuantizerMode::Control QuantizerMode::WeightASharpControl   = { kParamQuantWeightASharp, "  Adjust the attraction weighting of note A#" };
-const QuantizerMode::Control QuantizerMode::WeightBControl        = { kParamQuantWeightB,      "  Adjust the attraction weighting of note B" };
+const QuantizerMode::Control QuantizerMode::Controls[] = {
+	{ kParamAttenValue,        "  Attenuate the sequence value before quant" },
+	{ kParamOffsetValue,       " Offset the sequence value before quantizing" },
+	{ kParamTranspose,         "   Transpose the sequence after quantizing" },
+	{ kParamQuantWeightC,      "  Adjust the attraction weighting of note C" },
+	{ kParamQuantWeightCSharp, "  Adjust the attraction weighting of note C#" },
+	{ kParamQuantWeightD,      "  Adjust the attraction weighting of note D" },
+	{ kParamQuantWeightDSharp, "  Adjust the attraction weighting of note D#" },
+	{ kParamQuantWeightE,      "  Adjust the attraction weighting of note E" },
+	{ kParamQuantWeightF,      "  Adjust the attraction weighting of note F" },
+	{ kParamQuantWeightFSharp, "  Adjust the attraction weighting of note F#" },
+	{ kParamQuantWeightG,      "  Adjust the attraction weighting of note G" },
+	{ kParamQuantWeightGSharp, "  Adjust the attraction weighting of note G#" },
+	{ kParamQuantWeightA,      "  Adjust the attraction weighting of note A" },
+	{ kParamQuantWeightASharp, "  Adjust the attraction weighting of note A#" },
+	{ kParamQuantWeightB,      "  Adjust the attraction weighting of note B" }
+};
 
 
 const QuantizerMode::Control& QuantizerMode::FindControlByParameterIndex(uint8_t idx) const {
-	for (const auto& ctrl : SelectableControls) {
-		if (ctrl->ParameterIndex == idx) {
-			return *ctrl;
+	for (const auto& ctrl : Controls) {
+		if (ctrl.ParameterIndex == idx) {
+			return ctrl;
 		}
 	}
 	// this should not happen, but we gotta satisfy the compiler of that
@@ -53,12 +54,12 @@ void QuantizerMode::Draw() const {
 }
 
 
-void QuantizerMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterDefinition::ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const {
+void QuantizerMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const {
 	NT_drawText(labelX, y + 8, label, 8);
 	float scaling = CalculateScaling(ParameterDefinition::Parameters[paramIdx].scaling);
 	auto val = AlgorithmInstance->v[paramIdx] / scaling;
 	auto& ctrl = FindControlByParameterIndex(paramIdx);
-	auto selected = SelectedControl == &ctrl;
+	auto selected = &Controls[SelectedControlIndex] == &ctrl;
 
 	if (scaling == 1) {
 		NT_intToString(&NumToStrBuf[0], val);
@@ -72,14 +73,14 @@ void QuantizerMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t edit
 
 
 void QuantizerMode::DrawParameters() const {
-	using enum ParameterDefinition::ParameterIndex;
+	using enum ParameterIndex;
 	DrawParameter(ModeAreaX, ModeAreaX + 39, 39, 1,  "Atten",  kParamAttenValue,  1, "%");
 	DrawParameter(ModeAreaX, ModeAreaX + 39, 39, 11, "Offset", kParamOffsetValue, 3, "V");
 	DrawParameter(ModeAreaX, ModeAreaX + 33, 45, 21, "Trans",  kParamTranspose,   0, " semi");
 }
 
 
-void QuantizerMode::DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterDefinition::ParameterIndex paramIdx) const {
+void QuantizerMode::DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const {
 	float scaling = CalculateScaling(ParameterDefinition::Parameters[paramIdx].scaling);
 	auto val = AlgorithmInstance->v[paramIdx] / scaling;
 	if (val > 0) {
@@ -91,7 +92,7 @@ void QuantizerMode::DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterDefinition
 }
 
 
-void QuantizerMode::DrawBlackKeySlider(uint8_t x, uint8_t y, ParameterDefinition::ParameterIndex paramIdx) const {
+void QuantizerMode::DrawBlackKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const {
 	float scaling = CalculateScaling(ParameterDefinition::Parameters[paramIdx].scaling);
 	auto val = AlgorithmInstance->v[paramIdx] / scaling;
 	NT_drawShapeI(kNT_rectangle, x - 1, y + 0, x + 9, y + 33, 0);
@@ -168,7 +169,7 @@ void QuantizerMode::DrawBlackKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, i
 void QuantizerMode::DrawKeyboard(uint8_t x, uint8_t y) const {
 	// draw the sliders as rectangles first...  we will come back and draw the borders at the end, so they are not drawn over
 	// also draw white key sliders before black key sliders, since black ones overlap white ones
-	using enum ParameterDefinition::ParameterIndex;
+	using enum ParameterIndex;
 	DrawWhiteKeySlider(x +   0, y, kParamQuantWeightC);
 	DrawWhiteKeySlider(x +  17, y, kParamQuantWeightD);
 	DrawWhiteKeySlider(x +  34, y, kParamQuantWeightE);
@@ -198,8 +199,8 @@ void QuantizerMode::DrawKeyboard(uint8_t x, uint8_t y) const {
 	DrawBlackKeyBorder(x + 98, y, 0, KeyBorderColor - 4);
 
 	if (Editable) {
-		if (SelectedControl->ParameterIndex >= kParamQuantWeightC) {
-			switch (SelectedControl->ParameterIndex)
+		if (Controls[SelectedControlIndex].ParameterIndex >= kParamQuantWeightC) {
+			switch (Controls[SelectedControlIndex].ParameterIndex)
 			{
 				case kParamQuantWeightC:
 					DrawCFKeyBorder(x + 0, y, -1, 15);
@@ -288,12 +289,12 @@ void QuantizerMode::DrawQuantizationResults() const {
 
 void QuantizerMode::Pot2Turn(float val) {
 	if (Editable) {
-		AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedControlIndexRaw, 0, ARRAY_SIZE(SelectableControls) - 0.001f);
-		auto old = SelectedControl;
-		SelectedControl = SelectableControls[static_cast<int>(SelectedControlIndexRaw)];
+		AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedControlIndexRaw, 0, ARRAY_SIZE(Controls) - 0.001f);
+		auto old = SelectedControlIndex;
+		SelectedControlIndex = static_cast<int>(SelectedControlIndexRaw);
 		LoadControlForEditing();
-		if (SelectedControl != old) {
-			AlgorithmInstance->HelpText.DisplayHelpText(SelectedControl->HelpText);
+		if (SelectedControlIndex != old) {
+			AlgorithmInstance->HelpText.DisplayHelpText(Controls[SelectedControlIndex].HelpText);
 		}
 	}
 }
@@ -302,14 +303,14 @@ void QuantizerMode::Pot2Turn(float val) {
 void QuantizerMode::Pot3Turn(float val) {
 	if (Editable) {
 		auto alg = NT_algorithmIndex(AlgorithmInstance);
-		auto parameterIndex = SelectedControl->ParameterIndex;
+		auto parameterIndex = Controls[SelectedControlIndex].ParameterIndex;
 		auto& param = ParameterDefinition::Parameters[parameterIndex];
 		bool isEnum = param.unit == kNT_unitEnum;
 		auto min = param.min;
-		auto max = param.max + (isEnum ? 0 : 0.99f);
+		auto max = param.max + (isEnum ? 0.99f : 0);
 		AlgorithmInstance->Input.UpdateValueWithPot(2, val, SelectedControlValueRaw, min, max);
 		NT_setParameterFromUi(alg, parameterIndex + NT_parameterOffset(), SelectedControlValueRaw);
-		AlgorithmInstance->HelpText.DisplayHelpText(SelectedControl->HelpText);
+		AlgorithmInstance->HelpText.DisplayHelpText(Controls[SelectedControlIndex].HelpText);
 	}
 }
 
@@ -317,22 +318,22 @@ void QuantizerMode::Pot3Turn(float val) {
 void QuantizerMode::Pot3ShortPress() {
 	if (Editable) {
 		auto alg = NT_algorithmIndex(AlgorithmInstance);
-		auto parameterIndex = SelectedControl->ParameterIndex;
+		auto parameterIndex = Controls[SelectedControlIndex].ParameterIndex;
 		auto& param = ParameterDefinition::Parameters[parameterIndex];
 		// since we are dealing with unscaled numbers here, epsilon is always 0.5
 		SelectedControlValueRaw = param.def + 0.5;
 		NT_setParameterFromUi(alg, parameterIndex + NT_parameterOffset(), SelectedControlValueRaw);
-		AlgorithmInstance->HelpText.DisplayHelpText(SelectedControl->HelpText);
+		AlgorithmInstance->HelpText.DisplayHelpText(Controls[SelectedControlIndex].HelpText);
 	}
 }
 
 
 void QuantizerMode::FixupPotValues(_NT_float3& pots) {
 	// calculate p2
-	pots[1] = SelectedControlIndexRaw / ARRAY_SIZE(SelectableControls);
+	pots[1] = SelectedControlIndexRaw / ARRAY_SIZE(Controls);
 
 	// calculate p3
-	auto parameterIndex = SelectedControl->ParameterIndex;
+	auto parameterIndex = Controls[SelectedControlIndex].ParameterIndex;
 	auto& param = ParameterDefinition::Parameters[parameterIndex];
 	auto val = AlgorithmInstance->v[parameterIndex];
 	bool isEnum = param.unit == kNT_unitEnum;
@@ -347,7 +348,7 @@ void QuantizerMode::FixupPotValues(_NT_float3& pots) {
 
 
 void QuantizerMode::LoadControlForEditing() {
-	auto parameterIndex = SelectedControl->ParameterIndex;
+	auto parameterIndex = Controls[SelectedControlIndex].ParameterIndex;
 	auto val = AlgorithmInstance->v[parameterIndex];
 	// since we are dealing with unscaled numbers here, epsilon is always 0.5
 	SelectedControlValueRaw = val + 0.5f;

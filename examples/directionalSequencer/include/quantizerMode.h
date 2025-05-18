@@ -17,51 +17,17 @@ private:
 	static constexpr int KeyBorderColor = 8;
 	static constexpr float MaxSliderValue = 10.0f;
 
-	using enum ParameterDefinition::ParameterIndex;
-	static const Control AttenuateValueControl;
-	static const Control OffsetValueControl;
-	static const Control TransposeControl;
-	static const Control WeightCControl;
-	static const Control WeightCSharpControl;
-	static const Control WeightDControl;
-	static const Control WeightDSharpControl;
-	static const Control WeightEControl;
-	static const Control WeightFControl;
-	static const Control WeightFSharpControl;
-	static const Control WeightGControl;
-	static const Control WeightGSharpControl;
-	static const Control WeightAControl;
-	static const Control WeightASharpControl;
-	static const Control WeightBControl;
-
-	const Control* SelectableControls[15] {
-		&AttenuateValueControl,
-		&OffsetValueControl,
-		&TransposeControl,
-		&WeightCControl,
-		&WeightCSharpControl,
-		&WeightDControl,
-		&WeightDSharpControl,
-		&WeightEControl,
-		&WeightFControl,
-		&WeightFSharpControl,
-		&WeightGControl,
-		&WeightGSharpControl,
-		&WeightAControl,
-		&WeightASharpControl,
-		&WeightBControl
-	};
-
+	static const Control Controls[];
+	size_t SelectedControlIndex = 0;
 	float SelectedControlIndexRaw = 0.0f;
 	float SelectedControlValueRaw = 0.0f;
-	const Control* SelectedControl = SelectableControls[0];
 
 	const Control& FindControlByParameterIndex(uint8_t idx) const;
-	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterDefinition::ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const;
+	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const;
 	void DrawParameters() const;
 
-	void DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterDefinition::ParameterIndex paramIdx) const;
-	void DrawBlackKeySlider(uint8_t x, uint8_t y, ParameterDefinition::ParameterIndex paramIdx) const;
+	void DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const;
+	void DrawBlackKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const;
 	void DrawCFKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, int color) const;
 	void DrawDKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, int color) const;
 	void DrawEBKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, int color) const;

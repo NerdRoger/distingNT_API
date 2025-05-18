@@ -34,4 +34,5 @@ public:
 	virtual void Pot3ShortPress() { }
 	virtual void Pot3LongPress() { }
 	virtual void FixupPotValues(_NT_float3& pots) { }
+	virtual void ParameterChanged(int paramIndex) { }
 };

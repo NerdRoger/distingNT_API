@@ -17,3 +17,6 @@ const CellDefinition CellDefinitions::Data[] = {
 	{ "Accum Times", 0, 7,   0,   0, "  Clear accumulator for cell after N visits" },
 };
 
+
+const uint8_t CellDefinitions::Count = sizeof(Data) / sizeof(Data[0]);
+

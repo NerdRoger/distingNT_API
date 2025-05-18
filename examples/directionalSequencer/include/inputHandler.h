@@ -14,9 +14,11 @@ private:
 	bool Encoder2LongPressFired = false;
 	uint32_t Pot3DownTime = 0;
 	bool Pot3LongPressFired = false;
-	uint32_t BlockPot3ChangesUntil = 0;
 
 public:
+	// TODO:  move back to private after troubleshooting
+	uint32_t BlockPot3ChangesUntil = 0;
+
 	void Encoder1Turn(int8_t x);
 	void Encoder2Turn(int8_t x);
 

@@ -3,8 +3,8 @@
 #include "parameterDefinition.h"
 
 
-static inline constexpr const char* enumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
-static inline constexpr const char* enumStringsRestWhenInactive[] = { "No", "Yes" };
+static const char* const enumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
+static const char* const enumStringsRestWhenInactive[] = { "No", "Yes" };
 
 
 const _NT_parameter ParameterDefinition::Parameters[] {
@@ -46,37 +46,27 @@ const _NT_parameter ParameterDefinition::Parameters[] {
 	{ .name = "Reset when Inactive", .min =    0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = enumStringsRestWhenInactive },
 };
 
-
-static constexpr uint8_t QuantizePage[] = {
-	ParameterDefinition::kParamAttenValue, ParameterDefinition::kParamOffsetValue,
-	ParameterDefinition::kParamTranspose, ParameterDefinition::kParamQuantWeightC,
-	ParameterDefinition::kParamQuantWeightCSharp, ParameterDefinition::kParamQuantWeightD,
-	ParameterDefinition::kParamQuantWeightDSharp, ParameterDefinition::kParamQuantWeightE,
-	ParameterDefinition::kParamQuantWeightF, ParameterDefinition::kParamQuantWeightFSharp,
-	ParameterDefinition::kParamQuantWeightG, ParameterDefinition::kParamQuantWeightGSharp,
-	ParameterDefinition::kParamQuantWeightA, ParameterDefinition::kParamQuantWeightASharp,
-	ParameterDefinition::kParamQuantWeightB
+using enum ParameterIndex;
+static const uint8_t QuantizePage[] = {
+	kParamAttenValue, kParamOffsetValue, kParamTranspose, kParamQuantWeightC,
+	kParamQuantWeightCSharp, kParamQuantWeightD, kParamQuantWeightDSharp, kParamQuantWeightE,
+	kParamQuantWeightF, kParamQuantWeightFSharp, kParamQuantWeightG, kParamQuantWeightGSharp,
+	kParamQuantWeightA, kParamQuantWeightASharp, kParamQuantWeightB
 };
 
 
-static constexpr uint8_t RoutingPage[] = {
-	ParameterDefinition::kParamClock, ParameterDefinition::kParamReset,
-	ParameterDefinition::kParamValue, ParameterDefinition::kParamGate,
-	ParameterDefinition::kParamVelocity
+static const uint8_t RoutingPage[] = {
+	kParamClock, kParamReset, kParamValue, kParamGate, kParamVelocity
 };
 
 
-static constexpr uint8_t SequencerPage[] = {
-	ParameterDefinition::kParamGateLengthSource, ParameterDefinition::kParamMaxGateLength,
-	ParameterDefinition::kParamGateLengthAttenuate, ParameterDefinition::kParamHumanizeValue,
-	ParameterDefinition::kParamVelocityAttenuate, ParameterDefinition::kParamVelocityOffset,
-	ParameterDefinition::kParamMoveNCells, ParameterDefinition::kParamRestAfterNSteps,
-	ParameterDefinition::kParamSkipAfterNSteps, ParameterDefinition::kParamResetAfterNSteps,
-	ParameterDefinition::kParamResetWhenInactive
+static const uint8_t SequencerPage[] = {
+	kParamGateLengthSource, kParamMaxGateLength, kParamGateLengthAttenuate, kParamHumanizeValue, kParamVelocityAttenuate, 
+	kParamVelocityOffset, kParamMoveNCells, kParamRestAfterNSteps, kParamSkipAfterNSteps, kParamResetAfterNSteps, kParamResetWhenInactive
 };
 
 
-const _NT_parameterPage ParameterDefinition::ParameterPageArray[] = {
+static const _NT_parameterPage ParameterPageArray[] = {
 	{ .name = "Sequencer", .numParams = ARRAY_SIZE(SequencerPage), .params = SequencerPage },
 	{ .name = "Quantize",  .numParams = ARRAY_SIZE(QuantizePage),  .params = QuantizePage },
 	{ .name = "Routing",   .numParams = ARRAY_SIZE(RoutingPage),   .params = RoutingPage },
@@ -84,6 +74,9 @@ const _NT_parameterPage ParameterDefinition::ParameterPageArray[] = {
 
 
 const _NT_parameterPages ParameterDefinition::ParameterPages = {
-	.numPages = ARRAY_SIZE(ParameterDefinition::ParameterPageArray),
-	.pages = ParameterDefinition::ParameterPageArray,
+	.numPages = ARRAY_SIZE(ParameterPageArray),
+	.pages = ParameterPageArray,
 };
+
+
+const uint8_t ParameterDefinition::Count = ARRAY_SIZE(Parameters);
