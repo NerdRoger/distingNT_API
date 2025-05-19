@@ -3,7 +3,8 @@
 #include <distingnt/api.h>
 
 struct CellDefinition {
-	const char* Name;
+	const char* FieldName;    // Used to identify this field in the preset JSON.  Should never change
+	const char* DisplayName;
 	float Min;
 	float Max;
 	float Default;

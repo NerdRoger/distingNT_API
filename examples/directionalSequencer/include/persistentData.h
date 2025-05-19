@@ -4,6 +4,6 @@
 #include "cellData.h"
 
 struct PersistentData {
-	CellCoords InitialStep { 0, 2 }; // TODO:  Set real defaults
+	CellCoords InitialStep { 0, 0 };
 	CellData Cells[GridSizeX][GridSizeY];
 };

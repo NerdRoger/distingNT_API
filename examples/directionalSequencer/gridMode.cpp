@@ -142,7 +142,7 @@ void GridMode::DrawParamLine(int paramIndex, int top) const {
 
 	auto idx = static_cast<CellDataType>(paramIndex);
 	const auto& cd = AlgorithmInstance->CellDefs[idx];
-	NT_drawText(paramNameX, y, cd.Name, color);
+	NT_drawText(paramNameX, y, cd.DisplayName, color);
 	DrawParamLineValue(paramValueX, y, color, idx, cd);
 }
 
