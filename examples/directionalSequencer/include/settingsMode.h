@@ -4,59 +4,38 @@
 #include "parameterDefinition.h"
 
 struct SettingsMode : ModeBase {
-// private:
+private:
 
-// 	struct Control {
-// 		uint8_t     ParameterIndex;
-// 		const char* HelpText;
-// 	};
+	struct Control {
+		int16_t     ParameterIndex;
+		const char* HelpText;
+	};
 
-// 	static const Control GateSourceControl;
-// 	static const Control GateAttenControl;
-// 	static const Control MaxGateControl;
-// 	static const Control HumanizeControl;
-// 	static const Control VelocityAttenControl;
-// 	static const Control VelocityOffsetControl;
-// 	static const Control MoveNCellsControl;
-// 	static const Control RestAfterNStepsControl;
-// 	static const Control SkipAfterNStepsControl;
-// 	static const Control ResetAfterNStepsControl;
-// 	static const Control ResetWhenInactiveControl;
+	static const Control Controls[];
+	static const Control GateControls[];
 
-// 	const Control* SelectableControls[10] {
-// 		&GateSourceControl,
-// 		&GateAttenControl,
-// 		&HumanizeControl,
-// 		&VelocityAttenControl,
-// 		&VelocityOffsetControl,
-// 		&MoveNCellsControl, 
-// 		&RestAfterNStepsControl,
-// 		&SkipAfterNStepsControl,
-// 		&ResetAfterNStepsControl,
-// 		&ResetWhenInactiveControl
-// 	};
+	size_t SelectedControlIndex = 0;
+	float SelectedControlIndexRaw = 0.0f;
+	float SelectedControlValueRaw = 0.0f;
 
-// 	float SelectedControlIndexRaw = 0.0f;
-// 	float SelectedControlValueRaw = 0.0f;
-// 	const Control* SelectedControl = SelectableControls[0];
-
-// 	const Control& FindControlByParameterIndex(uint8_t idx) const;
-// 	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const;
-// 	void DrawParameters() const;
-// 	void DrawHelpSection() const;
+	const Control& GetControlByOrdinalIndex(size_t idx) const;
+	const Control& FindControlByParameterIndex(uint8_t idx) const;
+	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const;
+	void DrawParameters() const;
+	void DrawHelpSection() const;
 	
-// public:
-// 	void DrawIcon(int x, int y, int color) const override;
-// 	void Draw() const override;
+public:
+	void DrawIcon(int x, int y, int color) const override;
+	void Draw() const override;
 
-// 	void Encoder2ShortPress() override;
-// 	void Pot2Turn(float val) override;
-// 	void Pot3Turn(float val) override;
-// 	void Pot3ShortPress() override;
-// 	void FixupPotValues(_NT_float3& pots) override;
-// 	void ParameterChanged(int paramIndex) override;
+	void Encoder2ShortPress() override;
+	void Pot2Turn(float val) override;
+	void Pot3Turn(float val) override;
+	void Pot3ShortPress() override;
+	void FixupPotValues(_NT_float3& pots) override;
+//	void ParameterChanged(int paramIndex) override;
 
-// 	void LoadControlForEditing();
-// 	void Activate() override;
-// 	void FixupParameters();
+	void LoadControlForEditing();
+	void Activate() override;
+	void FixupParameters();
 };

@@ -7,21 +7,21 @@
 
 
 const QuantizerMode::Control QuantizerMode::Controls[] = {
-	{ kParamAttenValue,        "  Attenuate the sequence value before quant" },
+	{ kParamAttenValue,        "  Attenuate the sequence value before quant"  },
 	{ kParamOffsetValue,       " Offset the sequence value before quantizing" },
-	{ kParamTranspose,         "   Transpose the sequence after quantizing" },
-	{ kParamQuantWeightC,      "  Adjust the attraction weighting of note C" },
+	{ kParamTranspose,         "   Transpose the sequence after quantizing"   },
+	{ kParamQuantWeightC,      "  Adjust the attraction weighting of note C"  },
 	{ kParamQuantWeightCSharp, "  Adjust the attraction weighting of note C#" },
-	{ kParamQuantWeightD,      "  Adjust the attraction weighting of note D" },
+	{ kParamQuantWeightD,      "  Adjust the attraction weighting of note D"  },
 	{ kParamQuantWeightDSharp, "  Adjust the attraction weighting of note D#" },
-	{ kParamQuantWeightE,      "  Adjust the attraction weighting of note E" },
-	{ kParamQuantWeightF,      "  Adjust the attraction weighting of note F" },
+	{ kParamQuantWeightE,      "  Adjust the attraction weighting of note E"  },
+	{ kParamQuantWeightF,      "  Adjust the attraction weighting of note F"  },
 	{ kParamQuantWeightFSharp, "  Adjust the attraction weighting of note F#" },
-	{ kParamQuantWeightG,      "  Adjust the attraction weighting of note G" },
+	{ kParamQuantWeightG,      "  Adjust the attraction weighting of note G"  },
 	{ kParamQuantWeightGSharp, "  Adjust the attraction weighting of note G#" },
-	{ kParamQuantWeightA,      "  Adjust the attraction weighting of note A" },
+	{ kParamQuantWeightA,      "  Adjust the attraction weighting of note A"  },
 	{ kParamQuantWeightASharp, "  Adjust the attraction weighting of note A#" },
-	{ kParamQuantWeightB,      "  Adjust the attraction weighting of note B" }
+	{ kParamQuantWeightB,      "  Adjust the attraction weighting of note B"  },
 };
 
 

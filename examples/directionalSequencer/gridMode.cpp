@@ -7,10 +7,6 @@
 #include "helpTextHelper.h"
 #include "directionalSequencer.h"
 
-// TODO:  remove this
-// float p2, p3;
-// const char* str;
-
 
 GridMode::GridMode() {
 	// TODO:  make these sensible
@@ -42,19 +38,14 @@ void GridMode::DrawIcon(int x, int y, int color) const {
 
 void GridMode::Draw() const {
 
-	NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
+	// TODO:  remove this test code ad the end of development
+	// NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
 	// NT_floatToString(&NumToStrBuf[0], p2, 3);
 	// NT_drawText(0, 10, NumToStrBuf, 15);
 	// NT_floatToString(&NumToStrBuf[0], p3, 3);
 	// NT_drawText(0, 20, NumToStrBuf, 15);
 	// NT_floatToString(&NumToStrBuf[0], SelectedParameterIndexRaw, 3);
 	// NT_drawText(0, 30, NumToStrBuf, 15);
-
-	NT_intToString(&NumToStrBuf[0], AlgorithmInstance->Input.BlockPot3ChangesUntil);
-	NT_drawText(0, 20, NumToStrBuf, 15);
-
-	NT_intToString(&NumToStrBuf[0], AlgorithmInstance->TotalMs);
-	NT_drawText(0, 40, NumToStrBuf, 15);
 
 
 	DrawCells();

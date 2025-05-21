@@ -7,7 +7,10 @@
 #include "userTriggersMode.h"
 
 struct ModeSelector : OwnedBase {
+private:
+	uint8_t	SelectedModeIndex;
 
+public:
 	static constexpr int SelectedColor = 15;
 	static constexpr int UnselectedColor = 5;
 
@@ -16,10 +19,11 @@ struct ModeSelector : OwnedBase {
 	SettingsMode Settings;
 	UserTriggersMode UserTriggers;
 	ModeBase* Modes[4];
-	ModeBase* SelectedMode;
 	ModeSelector();
-	void SelectModeByIndex(int index);
+	void SelectModeByIndex(uint8_t index);
+	ModeBase& GetSelectedMode() const;
 	void Draw() const;
+	void FixupPotValues(_NT_float3& pots) const;
 	virtual void Initialize(DirectionalSequencer& alg) override;
 };
 

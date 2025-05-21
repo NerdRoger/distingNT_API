@@ -3,12 +3,12 @@
 
 
 void InputHandler::Encoder1Turn(int8_t x) {
-	AlgorithmInstance->Selector.SelectedMode->Encoder1Turn(x);
+	AlgorithmInstance->Selector.GetSelectedMode().Encoder1Turn(x);
 }
 
 
 void InputHandler::Encoder2Turn(int8_t x) {
-	AlgorithmInstance->Selector.SelectedMode->Encoder2Turn(x);
+	AlgorithmInstance->Selector.GetSelectedMode().Encoder2Turn(x);
 }
 
 
@@ -36,12 +36,12 @@ void InputHandler::Encoder2Release() {
 
 
 void InputHandler::Encoder2ShortPress() {
-	AlgorithmInstance->Selector.SelectedMode->Encoder2ShortPress();
+	AlgorithmInstance->Selector.GetSelectedMode().Encoder2ShortPress();
 }
 
 
 void InputHandler::Encoder2LongPress() {
-	AlgorithmInstance->Selector.SelectedMode->Encoder2LongPress();
+	AlgorithmInstance->Selector.GetSelectedMode().Encoder2LongPress();
 }
 
 
@@ -55,7 +55,7 @@ void InputHandler::Pot1Turn(float val) {
 
 
 void InputHandler::Pot2Turn(float val) {
-	AlgorithmInstance->Selector.SelectedMode->Pot2Turn(val);
+	AlgorithmInstance->Selector.GetSelectedMode().Pot2Turn(val);
 
 	// keep track of the pot position
 	PreviousPotValues[1] = val;
@@ -64,7 +64,7 @@ void InputHandler::Pot2Turn(float val) {
 
 void InputHandler::Pot3Turn(float val) {
 	if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= AlgorithmInstance->TotalMs) {
-		AlgorithmInstance->Selector.SelectedMode->Pot3Turn(val);
+		AlgorithmInstance->Selector.GetSelectedMode().Pot3Turn(val);
 	}
 
 	// keep track of the pot position
@@ -99,12 +99,12 @@ void InputHandler::Pot3Release() {
 
 
 void InputHandler::Pot3ShortPress() {
-	AlgorithmInstance->Selector.SelectedMode->Pot3ShortPress();
+	AlgorithmInstance->Selector.GetSelectedMode().Pot3ShortPress();
 }
 
 
 void InputHandler::Pot3LongPress() {
-	AlgorithmInstance->Selector.SelectedMode->Pot3LongPress();
+	AlgorithmInstance->Selector.GetSelectedMode().Pot3LongPress();
 }
 
 
@@ -133,9 +133,7 @@ void InputHandler::ProcessLongPresses() {
 
 
 void InputHandler::FixupPotValues(_NT_float3& pots) {
-	// TODO:  get Pot1 value from mode selector
-
-	AlgorithmInstance->Selector.SelectedMode->FixupPotValues(pots);
+	AlgorithmInstance->Selector.FixupPotValues(pots);
 }
 
 
