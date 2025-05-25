@@ -3,7 +3,7 @@
 #include "directionalSequencer.h"
 
 float CellData::GetField(const DirectionalSequencer& alg, CellDataType ct) const {
-	const auto& cd = alg.CellDefs[ct];
+	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
 	int result;
 	switch (ct)
 	{
@@ -28,7 +28,7 @@ float CellData::GetField(const DirectionalSequencer& alg, CellDataType ct) const
 
 
 void CellData::SetField(const DirectionalSequencer& alg, CellDataType ct, float val) {
-	const auto& cd = alg.CellDefs[ct];
+	const auto& cd = CellDefinitions[static_cast<size_t>(ct)];
 	val = clamp(val, cd.Min, cd.Max);
 	int16_t ival = val * static_cast<int16_t>(pow(10, cd.Precision));
 	switch (ct)

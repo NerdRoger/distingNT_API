@@ -3,15 +3,13 @@
 #include <distingnt/api.h>
 #include "common.h"
 #include "gridMode.h"
-#include "persistentData.h"
 #include "helpTextHelper.h"
 #include "directionalSequencer.h"
 
 
 GridMode::GridMode() {
 	// TODO:  make these sensible
-	CurrentStep = { .x = 3, .y = 3};
-	SelectedCell = { .x = 7, .y = 0};
+	SelectedCell = { .x = 0, .y = 0};
 	SelectedParameterIndex = CellDataType::Direction;
 }
 
@@ -62,16 +60,16 @@ void GridMode::DrawCells() const {
 			// is this cell selected?
 			bool selected = (x == SelectedCell.x) && (y == SelectedCell.y);
 			// is this the current step?
-			bool current = (x == CurrentStep.x) && (y == CurrentStep.y);
+			bool current = (x == AlgorithmInstance->Seq.CurrentStep.x) && (y == AlgorithmInstance->Seq.CurrentStep.y);
 
-			CellCoords coords { x, y };
+			CellCoords coords { static_cast<int8_t>(x), static_cast<int8_t>(y) };
 			auto cb = CellCoordsToBounds(coords);
 			
 			// draw the inner part of the cell, depending on what is selected/current
 			if (current) {
 					NT_drawShapeI(kNT_box, cb.x1 + 1, cb.y1 + 1, cb.x2 - 1, cb.y2 - 1, 15);
 			}
-			const auto& cell = AlgorithmInstance->Persist.Cells[x][y];
+			const auto& cell = AlgorithmInstance->Seq.Cells[x][y];
 			DrawCell(cell, selected, cb.x1, cb.y1, cb.x2, cb.y2);
 
 			// draw the cell border
@@ -83,7 +81,7 @@ void GridMode::DrawCells() const {
 
 
 void GridMode::DrawInitialCellBorder() const {
-	auto cb = CellCoordsToBounds(AlgorithmInstance->Persist.InitialStep);
+	auto cb = CellCoordsToBounds(AlgorithmInstance->Seq.InitialStep);
 	NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, CellBorderColor);
 	auto marqueeColor = CellBorderColor + 5;
 	for (int x = cb.x1; x <= cb.x2; x+=2)	{
@@ -102,7 +100,7 @@ void GridMode::DrawSelectedCellBorder() const {
 	auto color = Editable ? EditableCellBorderColor : NonEditableCellBorderColor;
 	NT_drawShapeI(kNT_box, cb.x1 - 2, cb.y1 - 2, cb.x2 + 2, cb.y2 + 2, NonEditableCellBorderColor);
 	NT_drawShapeI(kNT_box, cb.x1 - 1, cb.y1 - 1, cb.x2 + 1, cb.y2 + 1, color);
-	auto& initial = AlgorithmInstance->Persist.InitialStep;
+	auto& initial = AlgorithmInstance->Seq.InitialStep;
 	if (SelectedCell.x != initial.x || SelectedCell.y != initial.y) {
 		NT_drawShapeI(kNT_box, cb.x1, cb.y1, cb.x2, cb.y2, 0);
 	}
@@ -125,21 +123,21 @@ void GridMode::DrawParamLine(int paramIndex, int top) const {
 	auto yoffset = (top) * lineHeight + 2;
 	auto y = lineHeight * (paramIndex + 1) - yoffset;
 
-	auto selected = paramIndex == SelectedParameterIndex;
+	auto selected = paramIndex == static_cast<int>(SelectedParameterIndex);
 	auto color = (selected && Editable) ? SelectedParameterColor : UnselectedParameterColor;
 	if (selected) {
 		DrawBullet(paramListX, y - 5, color);
 	}
 
 	auto idx = static_cast<CellDataType>(paramIndex);
-	const auto& cd = AlgorithmInstance->CellDefs[idx];
+	const auto& cd = CellDefinitions[paramIndex];
 	NT_drawText(paramNameX, y, cd.DisplayName, color);
 	DrawParamLineValue(paramValueX, y, color, idx, cd);
 }
 
 
 void GridMode::DrawParamLineValue(int x, int y, int color, CellDataType ct, const CellDefinition& cd) const {
-	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+	const auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
 	float fval = cell.GetField(*AlgorithmInstance, ct);
 
 
@@ -215,8 +213,8 @@ void GridMode::DrawParamLineValue(int x, int y, int color, CellDataType ct, cons
 
 
 void GridMode::DrawParams() const {
-	auto top = max(SelectedParameterIndex - 2, 0);
-	auto paramCount = AlgorithmInstance->CellDefs.Count;
+	auto top = max(static_cast<int>(SelectedParameterIndex) - 2, 0);
+	int paramCount = ARRAY_SIZE(CellDefinitions);
 	top = min(top, paramCount - 5);
 	for (int i = top; i < top + 5; i++) {
 		DrawParamLine(i, top);
@@ -429,8 +427,8 @@ float GridMode::CalculateEpsilon(const CellDefinition& cd) const {
 
 
 void GridMode::LoadParamForEditing() {
-	const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
-	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+	const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
+	const auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
 	ParamEditRaw = cell.GetField(*AlgorithmInstance, SelectedParameterIndex) + CalculateEpsilon(cd);
 }
 
@@ -453,7 +451,7 @@ void GridMode::Encoder2ShortPress() {
 
 
 void GridMode::Encoder2LongPress() {
-	AlgorithmInstance->Persist.InitialStep = SelectedCell;
+	AlgorithmInstance->Seq.InitialStep = SelectedCell;
 }
 
 
@@ -461,12 +459,12 @@ void GridMode::Pot2Turn(float val) {
 //	p2 = val;
 
 	auto old = SelectedParameterIndex;
-	AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, AlgorithmInstance->CellDefs.Count);
-	SelectedParameterIndexRaw = clamp(SelectedParameterIndexRaw, 0.0f, AlgorithmInstance->CellDefs.Count - 0.001f);
+	AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, ARRAY_SIZE(CellDefinitions));
+	SelectedParameterIndexRaw = clamp(SelectedParameterIndexRaw, 0.0f, ARRAY_SIZE(CellDefinitions) - 0.001f);
 	SelectedParameterIndex = static_cast<CellDataType>(SelectedParameterIndexRaw);
 	if (SelectedParameterIndex != old) {
 		LoadParamForEditing();
-		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
 	}
 }
@@ -476,8 +474,8 @@ void GridMode::Pot3Turn(float val) {
 //	p3 = val;
 
 	if (Editable) {
-		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
-		auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
+		auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
 		AlgorithmInstance->Input.UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
 		cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
@@ -488,13 +486,13 @@ void GridMode::Pot3Turn(float val) {
 void GridMode::Pot3ShortPress() {
 	// only change values if we are editable
 	if (Editable) {
-		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
-		auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
+		auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
 		cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
-			if (AlgorithmInstance->Persist.InitialStep == SelectedCell) {
+			if (AlgorithmInstance->Seq.InitialStep == SelectedCell) {
 				cell.SetField(*AlgorithmInstance, SelectedParameterIndex, 3);
 			}
 		}
@@ -506,17 +504,17 @@ void GridMode::Pot3ShortPress() {
 
 void GridMode::Pot3LongPress() {
 	if (Editable) {
-		const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
+		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 		ParamEditRaw = cd.Default + CalculateEpsilon(cd);
 		for (int x = 0; x < GridSizeX; x++) {
 			for (int y = 0; y < GridSizeY; y++) {
-				auto& cell = AlgorithmInstance->Persist.Cells[x][y];
+				auto& cell = AlgorithmInstance->Seq.Cells[x][y];
 				cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
 			}
 		}
 		// default state for direction should give us an initial direction (east)
 		if (SelectedParameterIndex == CellDataType::Direction) {
-			auto& cell = AlgorithmInstance->Persist.Cells[AlgorithmInstance->Persist.InitialStep.x][AlgorithmInstance->Persist.InitialStep.y];
+			auto& cell = AlgorithmInstance->Seq.Cells[AlgorithmInstance->Seq.InitialStep.x][AlgorithmInstance->Seq.InitialStep.y];
 			cell.SetField(*AlgorithmInstance, SelectedParameterIndex, 3);
 		}
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
@@ -528,11 +526,11 @@ void GridMode::Pot3LongPress() {
 void GridMode::FixupPotValues(_NT_float3& pots) {
 	// calculate an epsilon that we can add to our value to put it exactly in between pot "ticks"
 	// this way we aren't right on the edge, where a slight pot bump could change the value
-	auto epsilon2 = 0.5 / AlgorithmInstance->CellDefs.Count;
-	pots[1] = static_cast<float>(SelectedParameterIndex) / AlgorithmInstance->CellDefs.Count + epsilon2;
+	auto epsilon2 = 0.5 / ARRAY_SIZE(CellDefinitions);
+	pots[1] = static_cast<float>(SelectedParameterIndex) / ARRAY_SIZE(CellDefinitions) + epsilon2;
 
-	const auto& cd = AlgorithmInstance->CellDefs[SelectedParameterIndex];
-	const auto& cell = AlgorithmInstance->Persist.Cells[SelectedCell.x][SelectedCell.y];
+	const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
+	const auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
 	auto range = cd.Max - cd.Min;
 	pots[2] = cell.GetField(*AlgorithmInstance, SelectedParameterIndex) / range;
 }

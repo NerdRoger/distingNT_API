@@ -3,12 +3,14 @@
 #include <stdint.h>
 #include <distingnt/api.h>
 
+
 constexpr uint8_t GridSizeX = 8;
 constexpr uint8_t GridSizeY = 4;
 
+
 struct CellCoords {
-	uint8_t x;
-	uint8_t y;
+	int8_t x;
+	int8_t y;
 
 	bool operator==(const CellCoords& other) const {
 		return x == other.x && y == other.y;
@@ -19,10 +21,12 @@ struct CellCoords {
 	}	
 };
 
+
 struct Point {
 	uint8_t x;
 	uint8_t y;
 };
+
 
 struct Bounds {
 	uint8_t x1;
@@ -31,20 +35,24 @@ struct Bounds {
 	uint8_t y2;
 };
 
+
 template <typename T>
 inline constexpr T min(T a, T b) {
 	return (a < b) ? a : b;
 }
+
 
 template <typename T>
 inline constexpr T max(T a, T b) {
 	return (a > b) ? a : b;
 }
 
+
 template <typename T>
 inline constexpr T clamp(T val, T lo, T hi) {
 	return (val < lo) ? lo : (val > hi) ? hi : val;
 }
+
 
 template <typename T>
 inline constexpr T wrap(T val, T lo, T hi) {
@@ -53,6 +61,7 @@ inline constexpr T wrap(T val, T lo, T hi) {
 	if (val < 0) val += range;
 	return val + lo;
 }
+
 
 inline constexpr uint16_t CalculateScaling(int scale) {
 	switch (scale)
@@ -63,3 +72,31 @@ inline constexpr uint16_t CalculateScaling(int scale) {
 		default: return 1;
 	}
 }
+
+
+// TODO:  possibly track when the last transition was, to measure gate duration
+struct Trigger {
+private:
+	static constexpr float LowThreshold = 0.1f;
+	static constexpr float HighThreshold = 1.0f;
+	static constexpr float TriggerVoltage = 10.0f;
+
+	bool State;
+public:
+	enum Edge {
+		None,
+		Rising,
+		Falling
+	};
+
+	inline __attribute__((always_inline)) Edge Process(float val) {
+		if (State && (val < LowThreshold)) {
+			State = false;
+			return Falling;
+		} else if (!State && (val >= HighThreshold)) {
+			State = true;
+			return Rising;
+		}
+		return None;
+	}
+};

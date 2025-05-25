@@ -1,7 +1,7 @@
 #include "cellDefinition.h"
 
 
-const CellDefinition CellDefinitions::Data[] = {
+const CellDefinition CellDefinitions[] = {
 	// Don't Change
 	//   vvvv
 	{ "Direction",   "Direction",   0, 8,   0,   0, "  Direction of next step. Blank = keep going" },
@@ -18,7 +18,3 @@ const CellDefinition CellDefinitions::Data[] = {
 	{ "AccumAdd",    "Accum Add",  -1, 1,   0,   3, " How much gets added to this cell each visit" },
 	{ "AccumTimes",  "Accum Times", 0, 7,   0,   0, "  Clear accumulator for cell after N visits" },
 };
-
-
-const uint8_t CellDefinitions::Count = sizeof(Data) / sizeof(Data[0]);
-

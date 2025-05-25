@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <distingnt/api.h>
+#include <string.h>
 #include "common.h"
 #include "quantizerMode.h"
 #include "directionalSequencer.h"
@@ -283,7 +284,18 @@ void QuantizerMode::Encoder2ShortPress() {
 
 
 void QuantizerMode::DrawQuantizationResults() const {
-	// TODO:  fill this out once quantizer is ported
+	auto result = AlgorithmInstance->Quant.LastResult;
+	auto x = ModeAreaX + 33;
+
+	if (strcmp(result.QuantizedNoteName, "") != 0) {
+		if (strcmp(result.QuantizedNoteName, result.FinalNoteName) != 0) {
+			NT_drawText(x - 20, 44, result.QuantizedNoteName, 8);
+			NT_drawText(x, 44, "=>", 8);
+			NT_drawText(x + 20, 44, result.FinalNoteName, 8);
+		} else {
+			NT_drawText(x, 44, result.QuantizedNoteName, 8);
+		}
+	}
 }
 
 

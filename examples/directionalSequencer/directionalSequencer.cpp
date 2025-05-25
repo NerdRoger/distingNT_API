@@ -2,13 +2,29 @@
 #include <new>
 #include <distingnt/api.h>
 #include <distingnt/serialisation.h>
+#include "common.h"
 #include "directionalSequencer.h"
 #include "parameterDefinition.h"
+#include "sequencer.h"
 
 
 DirectionalSequencer::DirectionalSequencer() {
 	parameters = ParameterDefinition::Parameters;
 	parameterPages = &ParameterDefinition::ParameterPages;
+}
+
+
+uint32_t DirectionalSequencer::Random(uint32_t lowInclusive, uint32_t highInclusive) {
+	uint32_t x = PrevRandom;
+	x ^= x << 13;
+	x ^= x >> 17;
+	x ^= x << 5;
+	PrevRandom = x;
+
+	uint32_t diff = highInclusive - lowInclusive;
+	x %= (diff + 1);
+	x += lowInclusive;
+	return x;
 }
 
 
@@ -23,8 +39,14 @@ void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specif
 
 _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 	auto& alg = *new (ptrs.sram) DirectionalSequencer();
+
+	// "seed" the random sequence
+	alg.PrevRandom = NT_getCpuCycleCount();
+
 	alg.Input.Initialize(alg);
 	alg.Selector.Initialize(alg);
+	alg.Seq.Initialize(alg);
+	alg.Quant.Initialize(alg);
 	alg.Selector.SelectModeByIndex(0);
 	return &alg;
 }
@@ -40,16 +62,54 @@ void ParameterChanged(_NT_algorithm* self, int p) {
 }
 
 
+// TODO:  see if I can group up all constants into a single struct to reduce GOT entries, if required
+uint32_t const samplesPerMs = NT_globals.sampleRate / 1000;
+
+
 void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 	auto& alg = *static_cast<DirectionalSequencer*>(self);
-	alg.InternalFrameCount += static_cast<uint32_t>(numFramesBy4) << 2;
+	auto numFrames = numFramesBy4 * 4;
 
-	uint32_t samplesPerMs = NT_globals.sampleRate / 1000;
+	// the parameter contains the bus number.  convert from 1-based bus numbers to 0-based bus indices
+	auto clockBusIndex    = alg.v[kParamClock]    - 1; 
+	auto resetBusIndex    = alg.v[kParamReset]    - 1; 
+	auto valueBusIndex    = alg.v[kParamValue]    - 1; 
+	auto gateBusIndex     = alg.v[kParamGate]     - 1; 
+	auto velocityBusIndex = alg.v[kParamVelocity] - 1; 
+
+	for (int i = 0; i < numFrames; i++) {
+		// process triggers
+		auto reset = alg.ResetTrigger.Process(busFrames[resetBusIndex * numFrames + i]);
+		auto clock = alg.ClockTrigger.Process(busFrames[clockBusIndex * numFrames + i]);
+
+		if (reset == Trigger::Edge::Rising) {
+			alg.Seq.ProcessResetTrigger();
+		}
+
+		if (clock == Trigger::Edge::Rising) {
+			alg.Seq.ProcessClockTrigger();
+		}
+
+		busFrames[valueBusIndex    * numFrames + i] = alg.Seq.Outputs.Value;
+		busFrames[gateBusIndex     * numFrames + i] = alg.Seq.Outputs.Gate;
+		busFrames[velocityBusIndex * numFrames + i] = alg.Seq.Outputs.Velocity;
+	}
+
+	// we can do this tracking outside of the processing loop, because we don't need sample-level accuracy
+	// we are only tracking milliseconds, so block-level accuracy should be fine
+	alg.InternalFrameCount += numFrames;
+
 	uint32_t deltaMs = alg.InternalFrameCount / samplesPerMs;
   alg.TotalMs += deltaMs;
 
 	// subtract off the number of samples we just added to our running ms counter, to keep InternalFrameCount low
 	alg.InternalFrameCount -= (deltaMs * samplesPerMs);
+
+	// process the sequencer once per millisecond, we don't need sample-accurate changes
+	if (deltaMs > 0) {
+		alg.Seq.Process();
+	}
+
 }
 
 
@@ -58,6 +118,18 @@ bool Draw(_NT_algorithm* self) {
 	// do this in draw, because we don't need it as frequently as step
 	alg.Input.ProcessLongPresses();
 	alg.Selector.Draw();
+
+
+// NT_drawText(0, 10, alg.Seq.DebugText, 15);
+// NT_drawText(0, 20, alg.Seq.DebugText2, 15);
+// NT_drawText(0, 30, alg.Seq.DebugText3, 15);
+// NT_drawText(0, 40, alg.Seq.DebugText4, 15);
+// NT_drawText(0, 50, alg.Seq.DebugText5, 15);
+// TODO:  remove this at the end of development
+	// char buf[15];
+	// NT_intToString(buf, randNum);
+	// NT_drawText(0, 30, buf, 15);
+
 	alg.Selector.GetSelectedMode().Draw();
 	return true;
 }
@@ -122,14 +194,14 @@ void Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 	stream.addMemberName("GridCellData");
 	stream.openArray();
 	// flatten our 2D array into a 1D array when persisting, so we don't have arrays of arrays in the JSON
-	for (int x = 0; x < GridSizeX; x++) {
-		for (int y = 0; y < GridSizeY; y++) {
+	for (size_t x = 0; x < GridSizeX; x++) {
+		for (size_t y = 0; y < GridSizeY; y++) {
 			stream.openObject();
-			for (int i = 0; i < alg.CellDefs.Count; i++) {
+			for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
 				auto cdt = static_cast<CellDataType>(i);
-				auto fval = alg.Persist.Cells[x][y].GetField(alg, cdt);
-				stream.addMemberName(alg.CellDefs[cdt].FieldName);
-				if (alg.CellDefs[cdt].Precision > 0) {
+				auto fval = alg.Seq.Cells[x][y].GetField(alg, cdt);
+				stream.addMemberName(CellDefinitions[i].FieldName);
+				if (CellDefinitions[i].Precision > 0) {
 					stream.addNumber(fval);
 				} else {
 					stream.addNumber(static_cast<int>(fval));
@@ -144,9 +216,9 @@ void Serialise(_NT_algorithm* self, _NT_jsonStream& stream) {
 	stream.openObject();
 	{
 		stream.addMemberName("x");
-		stream.addNumber(alg.Persist.InitialStep.x);
+		stream.addNumber(alg.Seq.InitialStep.x);
 		stream.addMemberName("y");
-		stream.addNumber(alg.Persist.InitialStep.y);
+		stream.addNumber(alg.Seq.InitialStep.y);
 	}
 	stream.closeObject();
 
@@ -167,12 +239,12 @@ bool DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonParse& parse) {
 			if (!parse.number(val)) {
 				return false;
 			}
-			alg.Persist.InitialStep.x = val;
+			alg.Seq.InitialStep.x = val;
 		} else if (parse.matchName("y")) {
 			if (!parse.number(val)) {
 				return false;
 			}
-			alg.Persist.InitialStep.y = val;
+			alg.Seq.InitialStep.y = val;
 		} else {
 			if (!parse.skipMember()) {
 				return false;
@@ -207,7 +279,7 @@ bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse) {
 		}
 
 		// validate we have the right number of data points
-		if (numMembers != CellDefinitions::Count) {
+		if (numMembers != ARRAY_SIZE(CellDefinitions)) {
 			return false;
 		}
 
@@ -216,19 +288,19 @@ bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse) {
 		for (int member = 0; member < numMembers; member++) {
 
 			bool found = false;
-			for (int i = 0; i < alg.CellDefs.Count; i++) {
+			for (size_t i = 0; i < ARRAY_SIZE(CellDefinitions); i++) {
 				auto cdt = static_cast<CellDataType>(i);
-				if (parse.matchName(alg.CellDefs[cdt].FieldName)) {
-					if (alg.CellDefs[cdt].Precision > 0) {
+				if (parse.matchName(CellDefinitions[i].FieldName)) {
+					if (CellDefinitions[i].Precision > 0) {
 						if (!parse.number(fval)) {
 							return false;
 						}
-						alg.Persist.Cells[x][y].SetField(alg, cdt, fval);
+						alg.Seq.Cells[x][y].SetField(alg, cdt, fval);
 					} else {
 						if (!parse.number(ival)) {
 							return false;
 						}
-						alg.Persist.Cells[x][y].SetField(alg, cdt, ival);
+						alg.Seq.Cells[x][y].SetField(alg, cdt, ival);
 					}
 					found = true;
 					break;

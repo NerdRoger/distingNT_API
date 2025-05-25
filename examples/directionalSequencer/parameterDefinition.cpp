@@ -4,7 +4,7 @@
 
 
 static const char* const enumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
-static const char* const enumStringsRestWhenInactive[] = { "No", "Yes" };
+static const char* const enumStringsResetWhenInactive[] = { "No", "Yes" };
 
 
 const _NT_parameter ParameterDefinition::Parameters[] {
@@ -43,7 +43,7 @@ const _NT_parameter ParameterDefinition::Parameters[] {
 	{ .name = "Rest after N steps",  .min =    0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
 	{ .name = "Skip after N steps",  .min =    0, .max =   32, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
 	{ .name = "Reset after N steps", .min =    0, .max =   64, .def =    0, .unit = kNT_unitNone,    .scaling = kNT_scalingNone, .enumStrings = NULL },
-	{ .name = "Reset when Inactive", .min =    0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = enumStringsRestWhenInactive },
+	{ .name = "Reset when Inactive", .min =    0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = enumStringsResetWhenInactive },
 };
 
 using enum ParameterIndex;

@@ -44,7 +44,6 @@ private:
 public:
 
 	CellCoords SelectedCell;
-	CellCoords CurrentStep;  // TODO:  move this to Sequencer and set real defaults
 
 	GridMode();
 	void DrawIcon(int x, int y, int color) const override;
