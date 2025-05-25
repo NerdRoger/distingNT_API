@@ -6,6 +6,8 @@
         "functional": "cpp",
         "cstdlib": "cpp",
         "cstddef": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "random": "cpp",
+        "limits": "cpp"
     }
 }
