@@ -9,6 +9,43 @@
 #include "quantizer.h"
 
 
+enum {	
+	kParamClock,
+	kParamReset,
+	kParamQuantReturn,
+	kParamValue,
+	kParamGate,
+	kParamVelocity,
+	kParamQuantSend,
+	kParamAttenValue,
+	kParamOffsetValue,
+	kParamTranspose,
+	kParamQuantWeightC,
+	kParamQuantWeightCSharp,
+	kParamQuantWeightD,
+	kParamQuantWeightDSharp,
+	kParamQuantWeightE,
+	kParamQuantWeightF,
+	kParamQuantWeightFSharp,
+	kParamQuantWeightG,
+	kParamQuantWeightGSharp,
+	kParamQuantWeightA,
+	kParamQuantWeightASharp,
+	kParamQuantWeightB,
+	kParamGateLengthSource,
+	kParamMaxGateLength,
+	kParamGateLengthAttenuate,
+	kParamHumanizeValue,
+	kParamVelocityAttenuate,
+	kParamVelocityOffset,
+	kParamMoveNCells,
+	kParamRestAfterNSteps,
+	kParamSkipAfterNSteps,
+	kParamResetAfterNSteps,
+	kParamResetWhenInactive,
+};
+
+
 struct DirectionalSequencer : public _NT_algorithm
 {
 private:
@@ -36,6 +73,6 @@ public:
 	Trigger ClockTrigger;
 	
 
-	DirectionalSequencer();
+	DirectionalSequencer() {}
 	~DirectionalSequencer() {}
 };

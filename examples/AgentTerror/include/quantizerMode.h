@@ -1,7 +1,5 @@
 #pragma once
-
 #include "modeBase.h"
-#include "parameterDefinition.h"
 
 
 struct QuantizerMode : ModeBase {

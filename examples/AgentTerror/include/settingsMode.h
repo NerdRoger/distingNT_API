@@ -1,7 +1,6 @@
 #pragma once
 
 #include "modeBase.h"
-#include "parameterDefinition.h"
 
 struct SettingsMode : ModeBase {
 private:

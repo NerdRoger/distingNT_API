@@ -4,7 +4,6 @@
 #include "common.h"
 #include "quantizerMode.h"
 #include "directionalSequencer.h"
-#include "parameterDefinition.h"
 
 
 const QuantizerMode::Control QuantizerMode::Controls[] = {
