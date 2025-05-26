@@ -46,17 +46,26 @@ enum {
 };
 
 
-struct DirectionalSequencer : public _NT_algorithm
-{
+// put the free functions in a namespace so the names won't clash across multiple plugins
+namespace DirectionalSequencerMethods {
+	void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
+	void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
+	_NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
+}
+
+
+struct DirectionalSequencer : public _NT_algorithm {
 private:
 	// make these friends so they can access our internal state
-	friend void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
-	friend void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
-	friend _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
+	friend void DirectionalSequencerMethods::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
+	friend void DirectionalSequencerMethods::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
+	friend _NT_algorithm* DirectionalSequencerMethods::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 
 	uint32_t InternalFrameCount = 0;
-	
+
 public:
+	static const _NT_factory Factory;
+
 	uint32_t TotalMs = 0;
 
 	RandomGenerator Random;
