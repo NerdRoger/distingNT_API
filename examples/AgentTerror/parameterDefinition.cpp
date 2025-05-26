@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <distingnt/api.h>
+#include "directionalSequencer.h"
 #include "parameterDefinition.h"
 
 
@@ -8,12 +9,17 @@ static const char* const enumStringsResetWhenInactive[] = { "No", "Yes" };
 
 
 const _NT_parameter ParameterDefinition::Parameters[] {
+	// TODO:  change I/O defaults to final....  these are for ease of development
 	NT_PARAMETER_CV_INPUT("Clock", 1, 1)
-	NT_PARAMETER_CV_INPUT("Reset", 1, 2)
+	NT_PARAMETER_CV_INPUT("Reset", 0, 2)
+
+	NT_PARAMETER_CV_INPUT("Quant Return", 0, 3)
 
 	NT_PARAMETER_CV_OUTPUT("Value",    1, 13)
 	NT_PARAMETER_CV_OUTPUT("Gate",     1, 14)
 	NT_PARAMETER_CV_OUTPUT("Velocity", 1, 15)
+
+	NT_PARAMETER_CV_OUTPUT("Quant Send", 0, 16)
 
 	{ .name = "Atten. Value", .min = 0,     .max = 1000, .def = 1000, .unit = kNT_unitPercent,   .scaling = kNT_scaling10,   .enumStrings = NULL },
 	{ .name = "Offset Value", .min = -5000, .max = 5000, .def = 0,    .unit = kNT_unitVolts,     .scaling = kNT_scaling1000, .enumStrings = NULL },
@@ -46,7 +52,6 @@ const _NT_parameter ParameterDefinition::Parameters[] {
 	{ .name = "Reset when Inactive", .min =    0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = enumStringsResetWhenInactive },
 };
 
-using enum ParameterIndex;
 static const uint8_t QuantizePage[] = {
 	kParamAttenValue, kParamOffsetValue, kParamTranspose, kParamQuantWeightC,
 	kParamQuantWeightCSharp, kParamQuantWeightD, kParamQuantWeightDSharp, kParamQuantWeightE,
@@ -56,7 +61,7 @@ static const uint8_t QuantizePage[] = {
 
 
 static const uint8_t RoutingPage[] = {
-	kParamClock, kParamReset, kParamValue, kParamGate, kParamVelocity
+	kParamClock, kParamReset, kParamValue, kParamGate, kParamVelocity, kParamQuantSend, kParamQuantReturn
 };
 
 

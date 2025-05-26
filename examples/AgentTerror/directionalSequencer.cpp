@@ -14,20 +14,6 @@ DirectionalSequencer::DirectionalSequencer() {
 }
 
 
-uint32_t DirectionalSequencer::Random(uint32_t lowInclusive, uint32_t highInclusive) {
-	uint32_t x = PrevRandom;
-	x ^= x << 13;
-	x ^= x >> 17;
-	x ^= x << 5;
-	PrevRandom = x;
-
-	uint32_t diff = highInclusive - lowInclusive;
-	x %= (diff + 1);
-	x += lowInclusive;
-	return x;
-}
-
-
 void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
 	req.numParameters = ParameterDefinition::Count;
 	req.sram = sizeof(DirectionalSequencer);
@@ -41,7 +27,7 @@ _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorith
 	auto& alg = *new (ptrs.sram) DirectionalSequencer();
 
 	// "seed" the random sequence
-	alg.PrevRandom = NT_getCpuCycleCount();
+	alg.Random.Seed(NT_getCpuCycleCount());
 
 	alg.Input.Initialize(alg);
 	alg.Selector.Initialize(alg);
@@ -71,28 +57,59 @@ void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 	auto numFrames = numFramesBy4 * 4;
 
 	// the parameter contains the bus number.  convert from 1-based bus numbers to 0-based bus indices
+	// this will make the ones makred "None" in the NT a -1 index
 	auto clockBusIndex    = alg.v[kParamClock]    - 1; 
 	auto resetBusIndex    = alg.v[kParamReset]    - 1; 
 	auto valueBusIndex    = alg.v[kParamValue]    - 1; 
 	auto gateBusIndex     = alg.v[kParamGate]     - 1; 
 	auto velocityBusIndex = alg.v[kParamVelocity] - 1; 
 
+	auto quantSendBusIndex   = alg.v[kParamQuantSend]   - 1; 
+	auto quantReturnBusIndex = alg.v[kParamQuantReturn] - 1; 
+
+	// check to see if we are using a return for quant values
+	alg.Seq.QuantReturnSupplied = (quantReturnBusIndex >= 0);
+
 	for (int i = 0; i < numFrames; i++) {
+
+		// only send/receive values from legit bus numbers.  If it's marked "None" in NT, we don't want to send/receive
+
 		// process triggers
-		auto reset = alg.ResetTrigger.Process(busFrames[resetBusIndex * numFrames + i]);
-		auto clock = alg.ClockTrigger.Process(busFrames[clockBusIndex * numFrames + i]);
-
-		if (reset == Trigger::Edge::Rising) {
-			alg.Seq.ProcessResetTrigger();
+		if (resetBusIndex >= 0) {
+			auto reset = alg.ResetTrigger.Process(busFrames[resetBusIndex * numFrames + i]);
+			if (reset == Trigger::Edge::Rising) {
+				alg.Seq.ProcessResetTrigger();
+			}
 		}
 
-		if (clock == Trigger::Edge::Rising) {
-			alg.Seq.ProcessClockTrigger();
+		if (clockBusIndex >= 0) {
+			auto clock = alg.ClockTrigger.Process(busFrames[clockBusIndex * numFrames + i]);
+			if (clock == Trigger::Edge::Rising) {
+				alg.Seq.ProcessClockTrigger();
+			}
 		}
 
-		busFrames[valueBusIndex    * numFrames + i] = alg.Seq.Outputs.Value;
-		busFrames[gateBusIndex     * numFrames + i] = alg.Seq.Outputs.Gate;
-		busFrames[velocityBusIndex * numFrames + i] = alg.Seq.Outputs.Velocity;
+		// process other inputs
+		if (alg.Seq.QuantReturnSupplied) {
+			alg.Seq.QuantReturn = busFrames[quantReturnBusIndex * numFrames + i];
+		}
+
+		// process outputs
+		if (valueBusIndex >= 0) {
+			busFrames[valueBusIndex * numFrames + i] = alg.Seq.Outputs.Value;
+		}
+
+		if (gateBusIndex >= 0) {
+			busFrames[gateBusIndex * numFrames + i] = alg.Seq.Outputs.Gate;
+		}
+
+		if (velocityBusIndex >= 0) {
+			busFrames[velocityBusIndex * numFrames + i] = alg.Seq.Outputs.Velocity;
+		}
+		
+		if (quantSendBusIndex >= 0) {
+			busFrames[quantSendBusIndex * numFrames + i] = alg.Seq.Outputs.PreQuantStepVal;
+		}
 	}
 
 	// we can do this tracking outside of the processing loop, because we don't need sample-level accuracy

@@ -17,12 +17,12 @@ private:
 	friend void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
 	friend _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 
-	uint32_t PrevRandom;
 	uint32_t InternalFrameCount = 0;
 	
 public:
 	uint32_t TotalMs = 0;
 
+	RandomGenerator Random;
 
 	// TODO:  Maybe find a better naming scheme for types/members
 	ModeSelector Selector;
@@ -38,7 +38,4 @@ public:
 
 	DirectionalSequencer();
 	~DirectionalSequencer() {}
-
-	uint32_t Random(uint32_t lowInclusive, uint32_t highInclusive);
-
 };

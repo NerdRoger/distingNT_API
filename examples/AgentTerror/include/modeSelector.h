@@ -6,7 +6,7 @@
 #include "settingsMode.h"
 #include "userTriggersMode.h"
 
-struct ModeSelector : OwnedBase {
+struct ModeSelector : OwnedBase<DirectionalSequencer> {
 private:
 	uint8_t	SelectedModeIndex;
 

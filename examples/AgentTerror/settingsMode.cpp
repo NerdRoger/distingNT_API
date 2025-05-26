@@ -73,7 +73,7 @@ void SettingsMode::Draw() const {
 }
 
 
-void SettingsMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const {
+void SettingsMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, int paramIdx, uint8_t decimalPlaces, const char* suffix) const {
 	auto& ctrl = FindControlByParameterIndex(paramIdx);
 	auto& selectedCtrl = GetControlByOrdinalIndex(SelectedControlIndex);
 	auto selected = &selectedCtrl == &ctrl;
@@ -86,7 +86,7 @@ void SettingsMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editB
 		return;
 	}
 
-	auto& param = ParameterDefinition::Parameters[paramIdx];
+	auto& param = AlgorithmInstance->parameters[paramIdx];
 	// enum parameters
 	if (param.unit == kNT_unitEnum) {
 		auto val = param.enumStrings[AlgorithmInstance->v[paramIdx]];
@@ -107,7 +107,6 @@ void SettingsMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editB
 
 
 void SettingsMode::DrawParameters() const {
-	using enum ParameterIndex;
 	DrawParameter(ModeAreaX, ModeAreaX + 68, 32, 1, "Gate Source", kParamGateLengthSource, 0, "");
 
 	// choose which control to render based on the selected gate length source
@@ -173,7 +172,7 @@ void SettingsMode::Pot3Turn(float val) {
 		auto alg = NT_algorithmIndex(AlgorithmInstance);
 		auto& selectedCtrl = GetControlByOrdinalIndex(SelectedControlIndex);
 		auto parameterIndex = selectedCtrl.ParameterIndex;
-		auto& param = ParameterDefinition::Parameters[parameterIndex];
+		auto& param = AlgorithmInstance->parameters[parameterIndex];
 		bool isEnum = param.unit == kNT_unitEnum;
 		auto min = param.min;
 		auto max = param.max + (isEnum ? 0.99f : 0);
@@ -189,7 +188,7 @@ void SettingsMode::Pot3ShortPress() {
 		auto alg = NT_algorithmIndex(AlgorithmInstance);
 		auto& selectedCtrl = GetControlByOrdinalIndex(SelectedControlIndex);
 		auto parameterIndex = selectedCtrl.ParameterIndex;
-		auto& param = ParameterDefinition::Parameters[parameterIndex];
+		auto& param = AlgorithmInstance->parameters[parameterIndex];
 		// since we are dealing with unscaled numbers here, epsilon is always 0.5
 		SelectedControlValueRaw = param.def + 0.5;
 		NT_setParameterFromUi(alg, parameterIndex + NT_parameterOffset(), SelectedControlValueRaw);
@@ -205,7 +204,7 @@ void SettingsMode::FixupPotValues(_NT_float3& pots) {
 	// calculate p3
 	auto& selectedCtrl = GetControlByOrdinalIndex(SelectedControlIndex);
 	auto parameterIndex = selectedCtrl.ParameterIndex;
-	auto& param = ParameterDefinition::Parameters[parameterIndex];
+	auto& param = AlgorithmInstance->parameters[parameterIndex];
 	auto val = AlgorithmInstance->v[parameterIndex];
 	bool isEnum = param.unit == kNT_unitEnum;
 	auto min = param.min;

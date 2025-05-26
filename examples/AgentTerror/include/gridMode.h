@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "gridInfo.h"
 #include "modeBase.h"
 #include "cellDefinition.h"
 #include "cellData.h"

@@ -4,7 +4,10 @@
 #include "parameterDefinition.h"
 
 
-struct Quantizer : OwnedBase {
+struct DirectionalSequencer;
+
+
+struct Quantizer : OwnedBase<DirectionalSequencer> {
 private:
 	struct WeightedNote {
 		const char* Name;
@@ -14,7 +17,7 @@ private:
 
 	WeightedNote WeightedNotes[12];
 
-	float GetNoteWeight(ParameterIndex paramIndex) const;
+	float GetNoteWeight(int paramIndex) const;
 	void AddNoteWeights();
 
 public:

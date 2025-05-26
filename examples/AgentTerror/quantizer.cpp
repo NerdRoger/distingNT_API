@@ -21,8 +21,8 @@ Quantizer::Quantizer() {
 }
 
 
-float Quantizer::GetNoteWeight(ParameterIndex paramIndex) const {
-	auto& param = ParameterDefinition::Parameters[paramIndex];
+float Quantizer::GetNoteWeight(int paramIndex) const {
+	auto& param = AlgorithmInstance->parameters[paramIndex];
 	float scaling = CalculateScaling(param.scaling);
 	return AlgorithmInstance->v[paramIndex] / scaling;
 }

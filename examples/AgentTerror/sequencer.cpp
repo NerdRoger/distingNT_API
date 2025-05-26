@@ -105,8 +105,14 @@ void Sequencer::Process() {
 		}
 	}
 
+
+	if (QuantReturnSupplied) {
+		Glide.NewStepVal = QuantReturn;
+	}
+
 	auto val = Glide.NewStepVal;
 	if (Glide.Duration > 0) {
+		Glide.Delta = (Glide.NewStepVal - Glide.OldStepVal) / Glide.Duration;
 		val = Glide.OldStepVal + Glide.Delta;
 		Glide.OldStepVal = val;
 		Glide.Duration -= 1;
@@ -122,6 +128,7 @@ void Sequencer::Process() {
 	Outputs.Value = val;
 	Outputs.Gate = gate;
 	Outputs.Velocity = NormalizeVelocityForOutput();
+	Outputs.PreQuantStepVal = PreQuantStepVal;
 }
 
 
@@ -248,26 +255,26 @@ void Sequencer::ProcessAccumulator() {
 
 void Sequencer::ProcessDrift() {
 	auto driftProb = Cells[CurrentStep.x][CurrentStep.y].GetField(*AlgorithmInstance, CellDataType::DriftProb);
-	if (AlgorithmInstance->Random(1, 100) <= driftProb) {
+	if (AlgorithmInstance->Random.Next(1, 100) <= driftProb) {
 		// we are going to drift the value, now let's figure out by how much
 		// we want a much higher likelihood of the drift amount being small vs. large, so use an exponential scale
 		// this gives us a scaling factor from 0 to 1
 		// don't use UINT32_MAX here because I'm not sure of the uniformity of the randomness distribution.
 		// Instead use a smaller number, which gives us less resolution, but hopefully better uniformity due to modulo distribution
 		static constexpr uint32_t res = 987654;
-		auto driftScale = static_cast<float>(AlgorithmInstance->Random(0, res)) / res;
+		auto driftScale = static_cast<float>(AlgorithmInstance->Random.Next(0, res)) / res;
 		driftScale = pow(driftScale, 0.5f);
 		// calculate the drift range from the max
 		auto driftRange = Cells[CurrentStep.x][CurrentStep.y].GetField(*AlgorithmInstance, CellDataType::MaxDrift);
 		// scale the drift range to get the actual drift, and make it negative half of the time
-		auto actualDrift = driftRange * driftScale * (AlgorithmInstance->Random(0, 1) == 1 ? -1 : 1);
+		auto actualDrift = driftRange * driftScale * (AlgorithmInstance->Random.Next(0, 1) == 1 ? -1 : 1);
 		StepVal += actualDrift;
 	}
 }
 
 
 void Sequencer::AttenuateValue() {
-	auto& param = ParameterDefinition::Parameters[kParamAttenValue];
+	auto& param = AlgorithmInstance->parameters[kParamAttenValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto atten = AlgorithmInstance->v[kParamAttenValue] / scaling;
 	StepVal *= (atten / 100.0f);
@@ -275,7 +282,7 @@ void Sequencer::AttenuateValue() {
 
 
 void Sequencer::OffsetValue() {
-	auto& param = ParameterDefinition::Parameters[kParamOffsetValue];
+	auto& param = AlgorithmInstance->parameters[kParamOffsetValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto offset = AlgorithmInstance->v[kParamOffsetValue] / scaling;
 	StepVal += offset;
@@ -283,8 +290,15 @@ void Sequencer::OffsetValue() {
 
 
 void Sequencer::QuantizeValue()	{
-	AlgorithmInstance->Quant.QuantizeValue(StepVal);
-	StepVal = AlgorithmInstance->Quant.LastResult.FinalValue;
+	// if we are using send/return to quantize, use the return value, otherwise use our quantizer
+	// TODO:  maybe disable elements of quantizer view if we are not using it
+	if (QuantReturnSupplied) {
+		PreQuantStepVal = StepVal;
+		StepVal = QuantReturn;
+	} else {
+		AlgorithmInstance->Quant.QuantizeValue(StepVal);
+		StepVal = AlgorithmInstance->Quant.LastResult.FinalValue;
+	}
 }
 
 
@@ -310,7 +324,7 @@ void Sequencer::ProcessRest() {
 void Sequencer::ProcessProbability() {
 	// apply probability to see if we should emit a gate for this step
 	auto prob = Cells[CurrentStep.x][CurrentStep.y].GetField(*AlgorithmInstance, CellDataType::Probability);
-	if (AlgorithmInstance->Random(1, 100) > prob) {
+	if (AlgorithmInstance->Random.Next(1, 100) > prob) {
 		EmitGate = false;
 	}
 }
@@ -415,7 +429,7 @@ void Sequencer::AttenuateGateLength() {
 		return;
 	}
 
-	auto& param = ParameterDefinition::Parameters[kParamGateLengthAttenuate];
+	auto& param = AlgorithmInstance->parameters[kParamGateLengthAttenuate];
 	float scaling = CalculateScaling(param.scaling);
 	auto atten = AlgorithmInstance->v[kParamGateLengthAttenuate] / scaling;
 
@@ -453,25 +467,25 @@ void Sequencer::CalculateGate() {
 void Sequencer::HumanizeGate() {
 	// only humanize non-legato gates
 	if (GatePct < 100) {
-		auto& param = ParameterDefinition::Parameters[kParamHumanizeValue];
+		auto& param = AlgorithmInstance->parameters[kParamHumanizeValue];
 		float scaling = CalculateScaling(param.scaling);
 		auto human = AlgorithmInstance->v[kParamHumanizeValue] / scaling;
 		human *= 1000;
-		float pct1 = AlgorithmInstance->Random(0, human) / 1000.0f;
-		float pct2 = AlgorithmInstance->Random(0, human) / 1000.0f;
+		float pct1 = AlgorithmInstance->Random.Next(0, human) / 1000.0f;
+		float pct2 = AlgorithmInstance->Random.Next(0, human) / 1000.0f;
 		auto off1 = GateLen * pct1 / 100.0f;
 		auto off2 = GateLen * pct2 / 100.0f;
 		// we always have to start late, because we can't read the future...
 		GateStart += off1;
 		// but we can end early or late
-		off2 = off2 * (AlgorithmInstance->Random(0, 1) == 1 ? -1 : 1);
+		off2 = off2 * (AlgorithmInstance->Random.Next(0, 1) == 1 ? -1 : 1);
 		GateEnd -= off2;
 	}
 }
 
 
 void Sequencer::CalculateVelocity() {
-	auto& param = ParameterDefinition::Parameters[kParamVelocityAttenuate];
+	auto& param = AlgorithmInstance->parameters[kParamVelocityAttenuate];
 	float scaling = CalculateScaling(param.scaling);
 	auto atten = AlgorithmInstance->v[kParamVelocityAttenuate] / scaling;
 	auto offset = AlgorithmInstance->v[kParamVelocityOffset];
@@ -483,14 +497,14 @@ void Sequencer::CalculateVelocity() {
 
 
 void Sequencer::HumanizeVelocity() {
-	auto& param = ParameterDefinition::Parameters[kParamHumanizeValue];
+	auto& param = AlgorithmInstance->parameters[kParamHumanizeValue];
 	float scaling = CalculateScaling(param.scaling);
 	auto human = AlgorithmInstance->v[kParamHumanizeValue] / scaling;
 	human *= 1000;
-	float pct = AlgorithmInstance->Random(0, human) / 1000.0f;
+	float pct = AlgorithmInstance->Random.Next(0, human) / 1000.0f;
 	auto off = Velocity * pct / 100.0f;
 	// we can move up or down in velocity
-	off = off * (AlgorithmInstance->Random(0, 1) == 1 ? -1 : 1);
+	off = off * (AlgorithmInstance->Random.Next(0, 1) == 1 ? -1 : 1);
 	auto velo = Velocity + off;
 	// clamp the result to the velocity range
 	Velocity = clamp(static_cast<int>(velo), 1, 127);

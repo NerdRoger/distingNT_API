@@ -2,12 +2,15 @@
 #include <distingnt/api.h>
 
 
-enum ParameterIndex {
+//enum ParameterIndex {
+enum {	
 	kParamClock,
 	kParamReset,
+	kParamQuantReturn,
 	kParamValue,
 	kParamGate,
 	kParamVelocity,
+	kParamQuantSend,
 	kParamAttenValue,
 	kParamOffsetValue,
 	kParamTranspose,

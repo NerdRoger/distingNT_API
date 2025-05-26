@@ -3,7 +3,8 @@
         {
             "name": "ARM",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/examples/AgentTerror/include",
+                "${workspaceFolder}/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/arm-none-eabi-c++",

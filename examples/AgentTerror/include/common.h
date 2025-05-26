@@ -4,24 +4,6 @@
 #include <distingnt/api.h>
 
 
-constexpr uint8_t GridSizeX = 8;
-constexpr uint8_t GridSizeY = 4;
-
-
-struct CellCoords {
-	int8_t x;
-	int8_t y;
-
-	bool operator==(const CellCoords& other) const {
-		return x == other.x && y == other.y;
-	}
-	
-	bool operator!=(const CellCoords& other) const {
-		return x != other.x || y != other.y;
-	}	
-};
-
-
 struct Point {
 	uint8_t x;
 	uint8_t y;
@@ -37,25 +19,25 @@ struct Bounds {
 
 
 template <typename T>
-inline constexpr T min(T a, T b) {
+inline __attribute__((always_inline)) constexpr T min(T a, T b) {
 	return (a < b) ? a : b;
 }
 
 
 template <typename T>
-inline constexpr T max(T a, T b) {
+inline __attribute__((always_inline)) constexpr T max(T a, T b) {
 	return (a > b) ? a : b;
 }
 
 
 template <typename T>
-inline constexpr T clamp(T val, T lo, T hi) {
+inline __attribute__((always_inline)) constexpr T clamp(T val, T lo, T hi) {
 	return (val < lo) ? lo : (val > hi) ? hi : val;
 }
 
 
 template <typename T>
-inline constexpr T wrap(T val, T lo, T hi) {
+inline __attribute__((always_inline)) constexpr T wrap(T val, T lo, T hi) {
 	const T range = hi - lo + 1;
 	val = (val - lo) % range;
 	if (val < 0) val += range;
@@ -63,7 +45,7 @@ inline constexpr T wrap(T val, T lo, T hi) {
 }
 
 
-inline constexpr uint16_t CalculateScaling(int scale) {
+inline __attribute__((always_inline)) constexpr uint16_t CalculateScaling(int scale) {
 	switch (scale)
 	{
 		case kNT_scaling10:   return 10;
@@ -98,5 +80,31 @@ public:
 			return Rising;
 		}
 		return None;
+	}
+};
+
+
+
+struct RandomGenerator {
+private:
+	uint32_t PrevRandom;
+
+public:
+
+	void __attribute__((always_inline)) Seed(uint32_t seed) {
+		PrevRandom = seed;
+	}
+
+	uint32_t __attribute__((always_inline)) Next(uint32_t lowInclusive, uint32_t highInclusive) {
+		uint32_t x = PrevRandom;
+		x ^= x << 13;
+		x ^= x >> 17;
+		x ^= x << 5;
+		PrevRandom = x;
+
+		uint32_t diff = highInclusive - lowInclusive;
+		x %= (diff + 1);
+		x += lowInclusive;
+		return x;
 	}
 };

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "ownedBase.h"
-#include "common.h"
+#include "gridInfo.h"
 #include "cellData.h"
 
 
-struct Sequencer : OwnedBase {
+struct DirectionalSequencer;
+
+
+struct Sequencer : OwnedBase<DirectionalSequencer> {
 private:
 	struct RatchetInfo {
 		bool Active;
@@ -27,6 +30,7 @@ private:
 		float Value;
 		float Gate;
 		float Velocity;
+		float PreQuantStepVal;
 	};
 
 	static constexpr uint16_t InactiveTime = 10000;
@@ -53,6 +57,7 @@ private:
 	bool EmitGate;
 	uint8_t GatePct;
 	uint8_t LastGatePct;
+	float PreQuantStepVal;
 	float StepVal;
 	uint32_t CellVisitCounts[GridSizeX][GridSizeY];
 	uint32_t GateLen;
@@ -91,6 +96,9 @@ public:
 
 	CellData Cells[GridSizeX][GridSizeY];	
 	OutputInfo Outputs;
+
+	bool QuantReturnSupplied;
+	float QuantReturn;
 
 	void ProcessClockTrigger();
 	void ProcessResetTrigger();

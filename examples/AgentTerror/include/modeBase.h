@@ -3,7 +3,11 @@
 #include <distingnt/api.h>
 #include "ownedBase.h"
 
-struct ModeBase : OwnedBase {
+
+struct DirectionalSequencer;
+
+
+struct ModeBase : OwnedBase<DirectionalSequencer> {
 private:
 	static constexpr int EditBoxUnselectedBackgroundColor = 1;
 	static constexpr int EditBoxSelectedBackgroundColor = 1;

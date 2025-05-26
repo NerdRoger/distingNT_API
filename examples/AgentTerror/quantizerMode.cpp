@@ -55,9 +55,9 @@ void QuantizerMode::Draw() const {
 }
 
 
-void QuantizerMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const {
+void QuantizerMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, int paramIdx, uint8_t decimalPlaces, const char* suffix) const {
 	NT_drawText(labelX, y + 8, label, 8);
-	float scaling = CalculateScaling(ParameterDefinition::Parameters[paramIdx].scaling);
+	float scaling = CalculateScaling(AlgorithmInstance->parameters[paramIdx].scaling);
 	auto val = AlgorithmInstance->v[paramIdx] / scaling;
 	auto& ctrl = FindControlByParameterIndex(paramIdx);
 	auto selected = &Controls[SelectedControlIndex] == &ctrl;
@@ -74,15 +74,14 @@ void QuantizerMode::DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t edit
 
 
 void QuantizerMode::DrawParameters() const {
-	using enum ParameterIndex;
 	DrawParameter(ModeAreaX, ModeAreaX + 39, 39, 1,  "Atten",  kParamAttenValue,  1, "%");
 	DrawParameter(ModeAreaX, ModeAreaX + 39, 39, 11, "Offset", kParamOffsetValue, 3, "V");
 	DrawParameter(ModeAreaX, ModeAreaX + 33, 45, 21, "Trans",  kParamTranspose,   0, " semi");
 }
 
 
-void QuantizerMode::DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const {
-	float scaling = CalculateScaling(ParameterDefinition::Parameters[paramIdx].scaling);
+void QuantizerMode::DrawWhiteKeySlider(uint8_t x, uint8_t y, int paramIdx) const {
+	float scaling = CalculateScaling(AlgorithmInstance->parameters[paramIdx].scaling);
 	auto val = AlgorithmInstance->v[paramIdx] / scaling;
 	if (val > 0) {
 		auto height = val * 49 / MaxSliderValue;
@@ -93,8 +92,8 @@ void QuantizerMode::DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterIndex para
 }
 
 
-void QuantizerMode::DrawBlackKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const {
-	float scaling = CalculateScaling(ParameterDefinition::Parameters[paramIdx].scaling);
+void QuantizerMode::DrawBlackKeySlider(uint8_t x, uint8_t y, int paramIdx) const {
+	float scaling = CalculateScaling(AlgorithmInstance->parameters[paramIdx].scaling);
 	auto val = AlgorithmInstance->v[paramIdx] / scaling;
 	NT_drawShapeI(kNT_rectangle, x - 1, y + 0, x + 9, y + 33, 0);
 	if (val > 0) {
@@ -170,7 +169,6 @@ void QuantizerMode::DrawBlackKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, i
 void QuantizerMode::DrawKeyboard(uint8_t x, uint8_t y) const {
 	// draw the sliders as rectangles first...  we will come back and draw the borders at the end, so they are not drawn over
 	// also draw white key sliders before black key sliders, since black ones overlap white ones
-	using enum ParameterIndex;
 	DrawWhiteKeySlider(x +   0, y, kParamQuantWeightC);
 	DrawWhiteKeySlider(x +  17, y, kParamQuantWeightD);
 	DrawWhiteKeySlider(x +  34, y, kParamQuantWeightE);
@@ -316,7 +314,7 @@ void QuantizerMode::Pot3Turn(float val) {
 	if (Editable) {
 		auto alg = NT_algorithmIndex(AlgorithmInstance);
 		auto parameterIndex = Controls[SelectedControlIndex].ParameterIndex;
-		auto& param = ParameterDefinition::Parameters[parameterIndex];
+		auto& param = AlgorithmInstance->parameters[parameterIndex];
 		bool isEnum = param.unit == kNT_unitEnum;
 		auto min = param.min;
 		auto max = param.max + (isEnum ? 0.99f : 0);
@@ -331,7 +329,7 @@ void QuantizerMode::Pot3ShortPress() {
 	if (Editable) {
 		auto alg = NT_algorithmIndex(AlgorithmInstance);
 		auto parameterIndex = Controls[SelectedControlIndex].ParameterIndex;
-		auto& param = ParameterDefinition::Parameters[parameterIndex];
+		auto& param = AlgorithmInstance->parameters[parameterIndex];
 		// since we are dealing with unscaled numbers here, epsilon is always 0.5
 		SelectedControlValueRaw = param.def + 0.5;
 		NT_setParameterFromUi(alg, parameterIndex + NT_parameterOffset(), SelectedControlValueRaw);
@@ -346,7 +344,7 @@ void QuantizerMode::FixupPotValues(_NT_float3& pots) {
 
 	// calculate p3
 	auto parameterIndex = Controls[SelectedControlIndex].ParameterIndex;
-	auto& param = ParameterDefinition::Parameters[parameterIndex];
+	auto& param = AlgorithmInstance->parameters[parameterIndex];
 	auto val = AlgorithmInstance->v[parameterIndex];
 	bool isEnum = param.unit == kNT_unitEnum;
 	auto min = param.min;

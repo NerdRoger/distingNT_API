@@ -3,7 +3,11 @@
 #include <distingnt/api.h>
 #include "ownedBase.h"
 
-struct InputHandler : OwnedBase {
+
+struct DirectionalSequencer;
+
+
+struct InputHandler : OwnedBase<DirectionalSequencer> {
 private:
 	static constexpr uint16_t ShortPressThreshold = 250; // How long (in ms) until a short press turns into a long press
 

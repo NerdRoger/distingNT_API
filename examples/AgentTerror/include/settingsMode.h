@@ -20,7 +20,7 @@ private:
 
 	const Control& GetControlByOrdinalIndex(size_t idx) const;
 	const Control& FindControlByParameterIndex(uint8_t idx) const;
-	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const;
+	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, int paramIdx, uint8_t decimalPlaces, const char* suffix) const;
 	void DrawParameters() const;
 	void DrawHelpSection() const;
 	

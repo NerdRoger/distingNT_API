@@ -5,7 +5,6 @@ endif
 INCLUDE_PATHS := -I$(NT_API_PATH)/include -I./include
 
 CPP_FLAGS := -std=c++23 -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -fno-exceptions -fno-rtti -Os -fPIC -Wall
-#CPP_FLAGS := -std=c++23 -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -fno-exceptions -fno-rtti -Os -Wall
 CPP_FLAGS_DEBUG := $(CPP_FLAGS) -g -O0
 
 CPP_FILES := $(wildcard *.cpp)

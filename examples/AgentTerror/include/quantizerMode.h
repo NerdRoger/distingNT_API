@@ -23,11 +23,11 @@ private:
 	float SelectedControlValueRaw = 0.0f;
 
 	const Control& FindControlByParameterIndex(uint8_t idx) const;
-	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, ParameterIndex paramIdx, uint8_t decimalPlaces, const char* suffix) const;
+	void DrawParameter(uint8_t labelX, uint8_t editBoxX, uint8_t editBoxWidth, uint8_t y, const char* label, int paramIdx, uint8_t decimalPlaces, const char* suffix) const;
 	void DrawParameters() const;
 
-	void DrawWhiteKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const;
-	void DrawBlackKeySlider(uint8_t x, uint8_t y, ParameterIndex paramIdx) const;
+	void DrawWhiteKeySlider(uint8_t x, uint8_t y, int paramIdx) const;
+	void DrawBlackKeySlider(uint8_t x, uint8_t y, int paramIdx) const;
 	void DrawCFKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, int color) const;
 	void DrawDKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, int color) const;
 	void DrawEBKeyBorder(uint8_t x, uint8_t y, uint8_t expandBy, int color) const;
