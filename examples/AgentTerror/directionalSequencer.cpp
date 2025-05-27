@@ -107,7 +107,6 @@ namespace DirectionalSequencerMethods {
 		// "seed" the random sequence
 		alg.Random.Seed(NT_getCpuCycleCount());
 
-		alg.Input.Initialize(alg);
 		alg.Selector.Initialize(alg);
 		alg.Seq.Initialize(alg);
 		alg.Quant.Initialize(alg);
@@ -211,7 +210,7 @@ namespace DirectionalSequencerMethods {
 	bool Draw(_NT_algorithm* self) {
 		auto& alg = *static_cast<DirectionalSequencer*>(self);
 		// do this in draw, because we don't need it as frequently as step
-		alg.Input.ProcessLongPresses();
+		alg.ProcessLongPresses();
 		alg.Selector.Draw();
 
 
@@ -237,7 +236,7 @@ namespace DirectionalSequencerMethods {
 
 	void SetupUI(_NT_algorithm* self, _NT_float3& pots) {
 		auto& alg = *static_cast<DirectionalSequencer*>(self);
-		alg.Input.FixupPotValues(pots);
+		alg.Selector.FixupPotValues(pots);
 	}
 
 
@@ -245,41 +244,44 @@ namespace DirectionalSequencerMethods {
 		auto& alg = *static_cast<DirectionalSequencer*>(self);
 
 		if (data.encoders[0]) {
-			alg.Input.Encoder1Turn(data.encoders[0]);
+			alg.Encoder1Turn(data.encoders[0]);
 		}
 
 		if (data.encoders[1]) {
-			alg.Input.Encoder2Turn(data.encoders[1]);
+			alg.Encoder2Turn(data.encoders[1]);
 		}
 
 		if (data.potChange & kNT_potL) {
-			alg.Input.Pot1Turn(data.pots[0]);
+			alg.Pot1Turn(data.pots[0]);
 		}
 
 		if (data.potChange & kNT_potC) {
-			alg.Input.Pot2Turn(data.pots[1]);
+			alg.Pot2Turn(data.pots[1]);
 		}
 
 		if (data.potChange & kNT_potR) {
-			alg.Input.Pot3Turn(data.pots[2]);
+			alg.Pot3Turn(data.pots[2]);
 		}
 
 		if ((data.buttons & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
-			alg.Input.Encoder2Push();
+			alg.Encoder2Push();
 		}
 
 		if (!(data.buttons & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
-			alg.Input.Encoder2Release();
+			alg.Encoder2Release();
 		}
 
 		if ((data.buttons & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
-			alg.Input.Pot3Push();
+			alg.Pot3Push();
 		}
 
 		if (!(data.buttons & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
-			alg.Input.Pot3Release();
+			alg.Pot3Release();
 		}
 
+		alg.PreviousPotValues[0] = data.pots[0];
+		alg.PreviousPotValues[1] = data.pots[1];
+		alg.PreviousPotValues[2] = data.pots[2];
 	}
 
 
@@ -464,3 +466,158 @@ const _NT_factory DirectionalSequencer::Factory =
 	.serialise = Serialise,
 	.deserialise = Deserialise
 };
+
+
+void DirectionalSequencer::Encoder1Turn(int8_t x) {
+	Selector.GetSelectedMode().Encoder1Turn(x);
+}
+
+
+void DirectionalSequencer::Encoder2Turn(int8_t x) {
+	Selector.GetSelectedMode().Encoder2Turn(x);
+}
+
+
+void DirectionalSequencer::Pot1Turn(float val) {
+	int v = val * ARRAY_SIZE(Selector.Modes);
+	Selector.SelectModeByIndex(v);	
+}
+
+
+void DirectionalSequencer::Pot2Turn(float val) {
+	Selector.GetSelectedMode().Pot2Turn(val);
+}
+
+
+void DirectionalSequencer::Pot3Turn(float val) {
+	if (Pot3DownTime == 0 && BlockPot3ChangesUntil <= TotalMs) {
+		Selector.GetSelectedMode().Pot3Turn(val);
+	}
+}
+
+
+void DirectionalSequencer::Encoder2Push() {
+	Encoder2DownTime = TotalMs;
+}
+
+
+void DirectionalSequencer::Encoder2Release() {
+	// this should not happen, but let's guard against it anyway
+	if (Encoder2DownTime <= 0) {
+		return;
+	}
+
+	// calculate how long we held the encoder down (in ms)
+	auto totalDownTime = TotalMs - Encoder2DownTime;
+	if (totalDownTime < ShortPressThreshold) {
+		Encoder2ShortPress();
+	} else {
+		// reset to prepare for another long press
+		Encoder2LongPressFired = false;
+	}
+	Encoder2DownTime = 0;
+}
+
+
+void DirectionalSequencer::Encoder2ShortPress() {
+	Selector.GetSelectedMode().Encoder2ShortPress();
+}
+
+
+void DirectionalSequencer::Encoder2LongPress() {
+	Selector.GetSelectedMode().Encoder2LongPress();
+}
+
+
+void DirectionalSequencer::Pot3Push() {
+	Pot3DownTime = TotalMs;
+}
+
+
+void DirectionalSequencer::Pot3Release() {
+	// this should not happen, but let's guard against it anyway
+	if (Pot3DownTime <= 0) {
+		return;
+	}
+
+	// calculate how long we held the encoder down (in ms)
+	auto totalDownTime = TotalMs - Pot3DownTime;
+	if (totalDownTime < ShortPressThreshold) {
+		Pot3ShortPress();
+	} else {
+		// reset to prepare for another long press
+		Pot3LongPressFired = false;
+	}
+	Pot3DownTime = 0;
+	// block any changes from taking place for a brief period afterward, because lifting finger from the pot can cause minute changes otherwise
+	BlockPot3ChangesUntil = TotalMs + 100;
+}
+
+
+void DirectionalSequencer::Pot3ShortPress() {
+	Selector.GetSelectedMode().Pot3ShortPress();
+}
+
+
+void DirectionalSequencer::Pot3LongPress() {
+	Selector.GetSelectedMode().Pot3LongPress();
+}
+
+
+void DirectionalSequencer::ProcessLongPresses() {
+	if (Pot3DownTime > 0) {
+		if (!Pot3LongPressFired) {
+			// calculate how long we held the pot down (in ms)
+			auto totalDownTime = TotalMs - Pot3DownTime;
+			if (totalDownTime >= ShortPressThreshold) {
+				Pot3LongPress();
+				Pot3LongPressFired = true;
+			}
+		}
+	}
+	if (Encoder2DownTime > 0) {
+		if (!Encoder2LongPressFired) {
+			// calculate how long we held the pot down (in ms)
+			auto totalDownTime = TotalMs - Encoder2DownTime;
+			if (totalDownTime >= ShortPressThreshold) {
+				Encoder2LongPress();
+				Encoder2LongPressFired = true;
+			}
+		}
+	}
+}
+
+
+void DirectionalSequencer::UpdateValueWithPot(int potIndex, float currentPotVal, float& value, float min, float max) {
+	auto prevPotVal = PreviousPotValues[potIndex];
+
+	// get the change in pot position since our last known value
+	auto dx = currentPotVal - prevPotVal;
+
+	// if it has changed too much (more than 1%), it probably happened when we were unaware of it, in another Disting screen.
+	// so just return the known value, and the next call should get us back on track, once our tracking is back in sync
+	if (abs(dx) > 0.01) {
+		return;
+	}
+
+	// are we increasing or decreasing the pot?
+	bool increasing = (currentPotVal > prevPotVal);
+	
+	// if we're very close to an extreme, go ahead and set the value to the relevant min or max
+	// this means we will end at 10 instead of 9.99973 for example, or 0 instead of 0.00042
+	// only do this when moving toward the extreme, as doing it when moving away just keeps attracting the value back
+	if (increasing && (currentPotVal > 0.995)) {
+		value = max;
+		return;
+	}
+	if (!increasing && currentPotVal < 0.005) {
+		value = min;
+		return;
+	}
+
+	// otherwise, soft takeover logic
+	auto valRange = increasing ? max - value : value - min;
+	auto potRange = increasing ? 1 - prevPotVal : prevPotVal;
+	auto factor = valRange / potRange;
+	value += (factor * dx);
+}

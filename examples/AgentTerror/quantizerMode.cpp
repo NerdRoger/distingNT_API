@@ -298,7 +298,7 @@ void QuantizerMode::DrawQuantizationResults() const {
 
 void QuantizerMode::Pot2Turn(float val) {
 	if (Editable) {
-		AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedControlIndexRaw, 0, ARRAY_SIZE(Controls) - 0.001f);
+		AlgorithmInstance->UpdateValueWithPot(1, val, SelectedControlIndexRaw, 0, ARRAY_SIZE(Controls) - 0.001f);
 		auto old = SelectedControlIndex;
 		SelectedControlIndex = static_cast<int>(SelectedControlIndexRaw);
 		LoadControlForEditing();
@@ -317,7 +317,7 @@ void QuantizerMode::Pot3Turn(float val) {
 		bool isEnum = param.unit == kNT_unitEnum;
 		auto min = param.min;
 		auto max = param.max + (isEnum ? 0.99f : 0);
-		AlgorithmInstance->Input.UpdateValueWithPot(2, val, SelectedControlValueRaw, min, max);
+		AlgorithmInstance->UpdateValueWithPot(2, val, SelectedControlValueRaw, min, max);
 		NT_setParameterFromUi(alg, parameterIndex + NT_parameterOffset(), SelectedControlValueRaw);
 		AlgorithmInstance->HelpText.DisplayHelpText(Controls[SelectedControlIndex].HelpText);
 	}

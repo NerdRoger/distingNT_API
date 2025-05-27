@@ -50,6 +50,7 @@ namespace WeightedQuantizerMethods {
 
 	_NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
 		auto& alg = *new (ptrs.sram) WeightedQuantizer();
+		alg.QuantView.Initialize(alg);
 		alg.NumChannels = specifications[0];
 		alg.BuildParameters();
 		return &alg;
@@ -59,6 +60,19 @@ namespace WeightedQuantizerMethods {
 	void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
 		// TODO:  fill this in
 	}
+
+
+	bool Draw(_NT_algorithm* self) {
+		auto& alg = *static_cast<WeightedQuantizer*>(self);
+		alg.QuantView.Draw();
+		return true;
+	}
+
+
+	bool HasCustomUI(_NT_algorithm* self) {
+		return true;
+	}
+
 
 }
 
@@ -123,5 +137,7 @@ const _NT_factory WeightedQuantizer::Factory =
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,
 	.step = Step,
+	.draw = Draw,
 	.tags = kNT_tagUtility,
+	.hasCustomUi = HasCustomUI
 };

@@ -459,7 +459,7 @@ void GridMode::Pot2Turn(float val) {
 //	p2 = val;
 
 	auto old = SelectedParameterIndex;
-	AlgorithmInstance->Input.UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, ARRAY_SIZE(CellDefinitions));
+	AlgorithmInstance->UpdateValueWithPot(1, val, SelectedParameterIndexRaw, 0, ARRAY_SIZE(CellDefinitions));
 	SelectedParameterIndexRaw = clamp(SelectedParameterIndexRaw, 0.0f, ARRAY_SIZE(CellDefinitions) - 0.001f);
 	SelectedParameterIndex = static_cast<CellDataType>(SelectedParameterIndexRaw);
 	if (SelectedParameterIndex != old) {
@@ -476,7 +476,7 @@ void GridMode::Pot3Turn(float val) {
 	if (Editable) {
 		const auto& cd = CellDefinitions[static_cast<size_t>(SelectedParameterIndex)];
 		auto& cell = AlgorithmInstance->Seq.Cells[SelectedCell.x][SelectedCell.y];
-		AlgorithmInstance->Input.UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
+		AlgorithmInstance->UpdateValueWithPot(2, val, ParamEditRaw, cd.Min, cd.Max + CalculateEpsilon(cd));
 		cell.SetField(*AlgorithmInstance, SelectedParameterIndex, ParamEditRaw);
 		AlgorithmInstance->HelpText.DisplayHelpText(cd.HelpText);
 	}

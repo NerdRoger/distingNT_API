@@ -1,5 +1,7 @@
 #pragma once
 #include <distingnt/api.h>
+#include "helpTextHelper.h"
+#include "quantizerView.h"
 
 
 enum {
@@ -52,8 +54,6 @@ private:
 	friend void WeightedQuantizerMethods::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
 	friend _NT_algorithm* WeightedQuantizerMethods::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
 	
-	uint16_t NumChannels;
-	
 	_NT_parameter ParameterDefs[kWQNumCommonParameters + MaxChannels * kWQNumPerChannelParameters];
 	_NT_parameterPages PagesDefs;
 	_NT_parameterPage	PageDefs[MaxChannels + 1];
@@ -62,6 +62,11 @@ private:
 	void BuildParameters();
 
 public:
+
+	uint16_t NumChannels;
+
+	HelpTextHelper HelpText;
+	QuantizerView QuantView;
 
 	WeightedQuantizer() {}
 	~WeightedQuantizer() {}
