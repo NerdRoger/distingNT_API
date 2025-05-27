@@ -45,24 +45,8 @@ enum {
 };
 
 
-// put the free functions in a namespace so the names won't clash across multiple plugins
-namespace DirectionalSequencerMethods {
-	void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
-	void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
-	_NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
-	void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
-	bool Draw(_NT_algorithm* self);
-}
-
-
 struct DirectionalSequencer : public _NT_algorithm {
 private:
-	// make these friends so they can access our internal state
-	friend void DirectionalSequencerMethods::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
-	friend void DirectionalSequencerMethods::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
-	friend _NT_algorithm* DirectionalSequencerMethods::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
-	friend void DirectionalSequencerMethods::CustomUI(_NT_algorithm* self, const _NT_uiData& data);
-	friend bool DirectionalSequencerMethods::Draw(_NT_algorithm* self);
 
 	static constexpr uint16_t ShortPressThreshold = 250; // How long (in ms) until a short press turns into a long press
 
@@ -95,11 +79,36 @@ private:
 
 	void ProcessLongPresses();
 
+	static const char* const EnumStringsMaxGateFrom[];
+	static const char* const EnumStringsResetWhenInactive[];
+	static const _NT_parameter ParametersDef[];
+	static const uint8_t QuantizePageDef[];
+	static const uint8_t RoutingPageDef[];
+	static const uint8_t SequencerPageDef[];
+	static const _NT_parameterPage PagesDef[];
+	static const _NT_parameterPages ParameterPagesDef;
+
+	static void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications);
+	static _NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications);
+	static void ParameterChanged(_NT_algorithm* self, int p);
+	static void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4);
+	static bool Draw(_NT_algorithm* self);
+	static bool HasCustomUI(_NT_algorithm* self);
+	static void SetupUI(_NT_algorithm* self, _NT_float3& pots);
+	static void CustomUI(_NT_algorithm* self, const _NT_uiData& data);
+	static void Serialise(_NT_algorithm* self, _NT_jsonStream& stream);
+	static bool DeserialiseInitialStep(_NT_algorithm* self, _NT_jsonParse& parse);
+	static bool DeserialiseGridCellData(_NT_algorithm* self, _NT_jsonParse& parse);
+	static bool Deserialise(_NT_algorithm* self, _NT_jsonParse& parse);
+
+
+
 	// TODO:  push stuff I might use across algorithms up to a common base class
 
 public:
 	static const _NT_factory Factory;
 
+	uint32_t static const SamplesPerMs;
 	uint32_t TotalMs = 0;
 
 	RandomGenerator Random;
