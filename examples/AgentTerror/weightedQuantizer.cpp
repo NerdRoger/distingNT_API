@@ -3,81 +3,33 @@
 #include "weightedQuantizer.h"
 
 
-namespace WeightedQuantizerMethods {
-
-	static const uint8_t quantParams[] = {
-		kWQParamQuantWeightC,
-		kWQParamQuantWeightCSharp,
-		kWQParamQuantWeightD,
-		kWQParamQuantWeightDSharp,
-		kWQParamQuantWeightE,
-		kWQParamQuantWeightF,
-		kWQParamQuantWeightFSharp,
-		kWQParamQuantWeightG,
-		kWQParamQuantWeightGSharp,
-		kWQParamQuantWeightA,
-		kWQParamQuantWeightASharp,
-		kWQParamQuantWeightB,
-	};
+const uint8_t WeightedQuantizer::QuantizePageDef[] = {
+	kWQParamQuantWeightC,	kWQParamQuantWeightCSharp,
+	kWQParamQuantWeightD,	kWQParamQuantWeightDSharp,
+	kWQParamQuantWeightE,
+	kWQParamQuantWeightF,	kWQParamQuantWeightFSharp,
+	kWQParamQuantWeightG,	kWQParamQuantWeightGSharp,
+	kWQParamQuantWeightA,	kWQParamQuantWeightASharp,
+	kWQParamQuantWeightB,
+};
 
 
-	static char const * const pageNames[] = {
-		"Channel 1",
-		"Channel 2",
-		"Channel 3",
-		"Channel 4",
-		"Channel 5",
-		"Channel 6",
-		"Channel 7",
-		"Channel 8",
-	};
+const char* const WeightedQuantizer::PageNamesDef[] = {
+	"Channel 1",
+	"Channel 2",
+	"Channel 3",
+	"Channel 4",
+	"Channel 5",
+	"Channel 6",
+	"Channel 7",
+	"Channel 8",
+};
 
 
-	static const _NT_specification specifications[] = {
-		{ .name = "Channels", .min = 1, .max = WeightedQuantizer::MaxChannels, .def = 1, .type = kNT_typeGeneric },
-	};
+const _NT_specification WeightedQuantizer::SpecificationsDef[] = {
+	{ .name = "Channels", .min = 1, .max = WeightedQuantizer::MaxChannels, .def = 1, .type = kNT_typeGeneric },
+};
 
-	void CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
-		int32_t numChannels = specifications[0];
-
-		req.numParameters = kWQNumCommonParameters + numChannels * kWQNumPerChannelParameters;
-		req.sram = sizeof(WeightedQuantizer);
-		req.dram = 0;
-		req.dtc = 0;
-		req.itc = 0;
-	}
-
-
-	_NT_algorithm* Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
-		auto& alg = *new (ptrs.sram) WeightedQuantizer();
-		alg.QuantView.Initialize(alg);
-		alg.NumChannels = specifications[0];
-		alg.BuildParameters();
-		return &alg;
-	}
-
-
-	void Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
-		// TODO:  fill this in
-	}
-
-
-	bool Draw(_NT_algorithm* self) {
-		auto& alg = *static_cast<WeightedQuantizer*>(self);
-		alg.QuantView.Draw();
-		return true;
-	}
-
-
-	bool HasCustomUI(_NT_algorithm* self) {
-		return true;
-	}
-
-
-}
-
-
-using namespace WeightedQuantizerMethods;
 
 void WeightedQuantizer::BuildParameters() {
 	ParameterDefs[0]  = { .name = "C",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
@@ -93,7 +45,7 @@ void WeightedQuantizer::BuildParameters() {
 	ParameterDefs[10] = { .name = "A#", .min = 0, .max = 1000, .def =   0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
 	ParameterDefs[11] = { .name = "B",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
 
-	PageDefs[0] = { .name = "Note Weights", .numParams = 12, .params = quantParams };
+	PageDefs[0] = { .name = "Note Weights", .numParams = 12, .params = QuantizePageDef };
 
 	size_t idx = 12;
 	uint8_t* pagePtr = PageParams;
@@ -112,7 +64,7 @@ void WeightedQuantizer::BuildParameters() {
 		pagePtr[3] = idx + 3;
 		pagePtr[4] = idx + 4;
 
-		PageDefs[i + 1] = { .name = pageNames[i], .numParams = 5, .params = pagePtr };
+		PageDefs[i + 1] = { .name = PageNamesDef[i], .numParams = 5, .params = pagePtr };
 
 		pagePtr += 5;
 		idx += 5;
@@ -126,14 +78,50 @@ void WeightedQuantizer::BuildParameters() {
 }
 
 
+void WeightedQuantizer::CalculateRequirements(_NT_algorithmRequirements& req, const int32_t* specifications) {
+	int32_t numChannels = specifications[0];
+	req.numParameters = kWQNumCommonParameters + numChannels * kWQNumPerChannelParameters;
+	req.sram = sizeof(WeightedQuantizer);
+	req.dram = 0;
+	req.dtc = 0;
+	req.itc = 0;
+}
+
+
+_NT_algorithm* WeightedQuantizer::Construct(const _NT_algorithmMemoryPtrs& ptrs, const _NT_algorithmRequirements& req, const int32_t* specifications) {
+	auto& alg = *new (ptrs.sram) WeightedQuantizer();
+	alg.QuantView.Initialize(alg);
+	alg.NumChannels = specifications[0];
+	alg.BuildParameters();
+	return &alg;
+}
+
+
+void WeightedQuantizer::Step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
+	// TODO:  fill this in
+}
+
+
+bool WeightedQuantizer::Draw(_NT_algorithm* self) {
+	auto& alg = *static_cast<WeightedQuantizer*>(self);
+	alg.QuantView.Draw();
+	return true;
+}
+
+
+bool WeightedQuantizer::HasCustomUI(_NT_algorithm* self) {
+	return true;
+}
+
+
 const _NT_factory WeightedQuantizer::Factory =
 {
 	.guid = NT_MULTICHAR( 'A', 'T', 'w', 'q' ),
 	.name = "Weighted Quantizer",
 	// TODO:  flesh this out
 	.description = "A quantizer where each note is weighter, and the larger the weight, the more pull it has",
-	.numSpecifications = ARRAY_SIZE(specifications),
-	.specifications = specifications,
+	.numSpecifications = ARRAY_SIZE(SpecificationsDef),
+	.specifications = SpecificationsDef,
 	.calculateRequirements = CalculateRequirements,
 	.construct = Construct,
 	.step = Step,
