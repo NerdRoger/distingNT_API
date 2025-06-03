@@ -34,7 +34,8 @@ void Quantizer::Quantize(Quantizer::QuantRequest& req) {
 			for (int offset = -1; offset <= 1; offset++) {
 				float candidate = (intPart + offset) + note.Fractional;
 				float distance = fabsf(val - candidate);
-				float score = (weight * 0.1f) - (distance * 1.0f);
+//				float score = (weight * 0.1f) - (distance * 1.0f);
+				float score = log(weight / distance);
 				if (score > bestScore) {
 					bestScore = score;
 					bestCandidate = candidate;
