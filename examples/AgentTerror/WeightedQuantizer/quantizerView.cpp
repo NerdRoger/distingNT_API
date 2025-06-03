@@ -23,7 +23,11 @@ const QuantizerView::Control QuantizerView::KeyControls[] = {
 void QuantizerView::Draw() const {
 	DrawBanks();
 	DrawKeyboard();
-	DrawResults();
+	if (BankPeeking) {
+		DrawPeek();
+	} else {
+		DrawResults();
+	}
 	DrawHelpSection();
 }
 
@@ -37,7 +41,6 @@ void QuantizerView::DrawBank(size_t bankNum, const char* label) const {
 
 void QuantizerView::DrawBanks() const {
 	// draw the bank scanner
-
 	if (AlgorithmInstance->ScanningLocked) {
 		NT_drawShapeI(kNT_rectangle, 0, 6, 255, 8, KeyForegroundColor);
 		NT_drawShapeI(kNT_line, 0, 7, 255, 7, KeyBackgroundColor);
@@ -48,7 +51,6 @@ void QuantizerView::DrawBanks() const {
 		NT_drawShapeI(kNT_rectangle, 0, 6, barPos, 8, KeyForegroundColor);
 		NT_drawShapeI(kNT_line, barPos, 6, barPos, 8, SelectedKeyBorderColor);
 	}
-
 
 	// then the banks
 	DrawBank(0, "1");
@@ -65,7 +67,8 @@ void QuantizerView::DrawBanks() const {
 
 
 void QuantizerView::DrawKey(uint8_t x, uint8_t y, uint16_t paramIndex) const {
-	auto val = AlgorithmInstance->GetScaledParameterValue(paramIndex);
+	auto rawVal = BankPeeking ? AlgorithmInstance->Banks[SelectedBankIndex].NoteValues[paramIndex - kWQParamQuantWeightC] : AlgorithmInstance->v[paramIndex];
+	float val = static_cast<float>(rawVal) / CalculateScaling(AlgorithmInstance->parameters[paramIndex].scaling);
 	
 	// draw the background color
 	NT_drawShapeI(kNT_rectangle, x, y, x + KeyWidth - 1, y + KeyHeight - 1, KeyBackgroundColor);
@@ -88,7 +91,7 @@ void QuantizerView::DrawKey(uint8_t x, uint8_t y, uint16_t paramIndex) const {
 	}
 
 	// finally draw the border if selected
-	if (KeyControls[SelectedKeyIndex].ParameterIndex == paramIndex) {
+	if (KeyControls[SelectedKeyIndex].ParameterIndex == paramIndex && !BankPeeking) {
 		NT_drawShapeI(kNT_box, x - 2, y - 2, x + KeyWidth - 1 + 2, y + KeyHeight - 1 + 2, SelectedKeyBorderColor);
 	}
 }
@@ -124,6 +127,14 @@ void QuantizerView::DrawKeyboard() const {
 	DrawKey(x, y, kWQParamQuantWeightGSharp);
 	x += KeyWidth + KeySpacing;
 	DrawKey(x, y, kWQParamQuantWeightASharp);
+}
+
+
+void QuantizerView::DrawPeek() const {
+	NT_drawText(145, 30, "Peeking at bank", 8);
+	char buf[3];
+	NT_intToString(buf, SelectedBankIndex + 1);
+	NT_drawText(183, 40, buf, 8);
 }
 
 
@@ -228,30 +239,36 @@ void QuantizerView::Activate() {
 
 
 void QuantizerView::Encoder1Turn(int8_t x) {
-	SelectedKeyIndex = wrap(static_cast<int>(SelectedKeyIndex) + x, 0, 11);
-	LoadKeyControlForEditing();
-	AlgorithmInstance->HelpText.DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
+	if (!BankPeeking) {
+		SelectedKeyIndex = wrap(static_cast<int>(SelectedKeyIndex) + x, 0, 11);
+		LoadKeyControlForEditing();
+		AlgorithmInstance->HelpText.DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
+	}
 }
 
 
 void QuantizerView::Encoder2Turn(int8_t x) {
-	SelectedBankIndex = wrap(static_cast<int>(SelectedBankIndex) + x, 0, 9);
-	AlgorithmInstance->HelpText.DisplayHelpText("   Short press to load, long press to save");
+	if (!BankPeeking) {
+		SelectedBankIndex = wrap(static_cast<int>(SelectedBankIndex) + x, 0, 9);
+		AlgorithmInstance->HelpText.DisplayHelpText("   Short press to load, long press to save");
+	}
 }
 
 
 void QuantizerView::Pot1Turn(float val) {
-	auto algIndex = NT_algorithmIndex(AlgorithmInstance);
-	auto parameterIndex = KeyControls[SelectedKeyIndex].ParameterIndex;
-	auto& param = AlgorithmInstance->parameters[parameterIndex];
-	AlgorithmInstance->UpdateValueWithPot(0, val, SelectedKeyValueRaw, param.min, param.max);
-	NT_setParameterFromUi(algIndex, parameterIndex + NT_parameterOffset(), SelectedKeyValueRaw);
-	AlgorithmInstance->HelpText.DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
+	if (!BankPeeking) {
+		auto algIndex = NT_algorithmIndex(AlgorithmInstance);
+		auto parameterIndex = KeyControls[SelectedKeyIndex].ParameterIndex;
+		auto& param = AlgorithmInstance->parameters[parameterIndex];
+		AlgorithmInstance->UpdateValueWithPot(0, val, SelectedKeyValueRaw, param.min, param.max);
+		NT_setParameterFromUi(algIndex, parameterIndex + NT_parameterOffset(), SelectedKeyValueRaw);
+		AlgorithmInstance->HelpText.DisplayHelpText(KeyControls[SelectedKeyIndex].HelpText);
+	}
 }
 
 
 void QuantizerView::Pot3Turn(float val) {
-	if (!AlgorithmInstance->ScanningLocked) {
+	if (!AlgorithmInstance->ScanningLocked && !BankPeeking) {
 		auto algIndex = NT_algorithmIndex(AlgorithmInstance);
 		auto& param = AlgorithmInstance->parameters[kWQParamBankScanPosition];
 		auto scanPos = AlgorithmInstance->GetScaledParameterValue(kWQParamBankScanPosition);
@@ -266,10 +283,22 @@ void QuantizerView::Pot3Turn(float val) {
 
 
 void QuantizerView::Pot3Push() {
-	AlgorithmInstance->ScanningLocked = !AlgorithmInstance->ScanningLocked;
-	if (!AlgorithmInstance->ScanningLocked) {
-		AlgorithmInstance->DoBankScan(AlgorithmInstance->v[kWQParamBankScanPosition]);
+	if (!BankPeeking) {
+		AlgorithmInstance->ScanningLocked = !AlgorithmInstance->ScanningLocked;
+		if (!AlgorithmInstance->ScanningLocked) {
+			AlgorithmInstance->DoBankScan(AlgorithmInstance->v[kWQParamBankScanPosition]);
+		}
 	}
+}
+
+
+void QuantizerView::Button3Push() {
+	BankPeeking = true;
+}
+
+
+void QuantizerView::Button3Release() {
+	BankPeeking = false;
 }
 
 

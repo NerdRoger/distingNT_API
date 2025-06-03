@@ -49,8 +49,6 @@ private:
 		int16_t NoteValues[12];
 	};
 
-	Bank Banks[10];
-
 	// NT Parameter Data
 	static const uint8_t GeneralPageDef[];
 	static const uint8_t NoteWeightsPageDef[];
@@ -101,6 +99,9 @@ private:
 	void Encoder2ShortPress();
 	void Encoder2LongPress();
 
+	void Button3Push();
+	void Button3Release();
+
 	void ProcessLongPresses();
 
 public:
@@ -118,6 +119,7 @@ public:
 	const char* FinalNoteNames[MaxChannels];
 	float OutputValues[MaxChannels];
 	bool ScanningLocked = true;
+	Bank Banks[10];
 
 	WeightedQuantizer() {}
 	~WeightedQuantizer() {}

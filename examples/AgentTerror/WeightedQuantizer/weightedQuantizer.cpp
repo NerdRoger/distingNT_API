@@ -259,7 +259,7 @@ bool WeightedQuantizer::Draw(_NT_algorithm* self) {
 
 
 uint32_t WeightedQuantizer::HasCustomUI(_NT_algorithm* self) {
-	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR;
+	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR | kNT_button3;
 }
 
 
@@ -302,6 +302,14 @@ void WeightedQuantizer::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 
 	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
 		alg.Pot3Push();
+	}
+
+	if ((data.controls & kNT_button3) && !(data.lastButtons & kNT_button3)) {
+		alg.Button3Push();
+	}
+
+	if (!(data.controls & kNT_button3) && (data.lastButtons & kNT_button3)) {
+		alg.Button3Release();
 	}
 
 	// if (!(data.buttons & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
@@ -421,6 +429,16 @@ void WeightedQuantizer::Encoder2ShortPress() {
 
 void WeightedQuantizer::Encoder2LongPress() {
 	QuantView.Encoder2LongPress();
+}
+
+
+void WeightedQuantizer::Button3Push() {
+	QuantView.Button3Push();
+}
+
+
+void WeightedQuantizer::Button3Release() {
+	QuantView.Button3Release();
 }
 
 
