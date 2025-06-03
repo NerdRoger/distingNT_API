@@ -18,25 +18,29 @@ struct Bounds {
 
 
 template <typename T>
-inline __attribute__((always_inline)) constexpr T min(T a, T b) {
+__attribute__((always_inline)) 
+inline constexpr T min(T a, T b) {
 	return (a < b) ? a : b;
 }
 
 
 template <typename T>
-inline __attribute__((always_inline)) constexpr T max(T a, T b) {
+__attribute__((always_inline)) 
+inline constexpr T max(T a, T b) {
 	return (a > b) ? a : b;
 }
 
 
 template <typename T>
-inline __attribute__((always_inline)) constexpr T clamp(T val, T lo, T hi) {
+__attribute__((always_inline)) 
+inline constexpr T clamp(T val, T lo, T hi) {
 	return (val < lo) ? lo : (val > hi) ? hi : val;
 }
 
 
 template <typename T>
-inline __attribute__((always_inline)) constexpr T wrap(T val, T lo, T hi) {
+__attribute__((always_inline)) 
+inline constexpr T wrap(T val, T lo, T hi) {
 	const T range = hi - lo + 1;
 	val = (val - lo) % range;
 	if (val < 0) val += range;
@@ -44,7 +48,8 @@ inline __attribute__((always_inline)) constexpr T wrap(T val, T lo, T hi) {
 }
 
 
-inline __attribute__((always_inline)) constexpr uint16_t CalculateScaling(int scale) {
+__attribute__((always_inline)) 
+inline constexpr uint16_t CalculateScaling(int scale) {
 	switch (scale)
 	{
 		case kNT_scaling10:   return 10;
@@ -70,7 +75,8 @@ public:
 		Falling
 	};
 
-	inline __attribute__((always_inline)) Edge Process(float val) {
+	__attribute__((always_inline)) 
+	inline Edge Process(float val) {
 		if (State && (val < LowThreshold)) {
 			State = false;
 			return Falling;
@@ -90,11 +96,13 @@ private:
 
 public:
 
-	void __attribute__((always_inline)) Seed(uint32_t seed) {
+	__attribute__((always_inline)) 
+	inline void Seed(uint32_t seed) {
 		PrevRandom = seed;
 	}
 
-	uint32_t __attribute__((always_inline)) Next(uint32_t lowInclusive, uint32_t highInclusive) {
+	__attribute__((always_inline)) 
+	inline uint32_t Next(uint32_t lowInclusive, uint32_t highInclusive) {
 		uint32_t x = PrevRandom;
 		x ^= x << 13;
 		x ^= x >> 17;

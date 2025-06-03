@@ -296,8 +296,9 @@ void Sequencer::QuantizeValue()	{
 		PreQuantStepVal = StepVal;
 		StepVal = QuantReturn;
 	} else {
-		AlgorithmInstance->Quant.QuantizeValue(StepVal);
-		StepVal = AlgorithmInstance->Quant.LastResult.FinalValue;
+		// TODO:  remove thos altogether once we seperate quantizer from sequencer
+		// AlgorithmInstance->Quant.QuantizeValue(StepVal);
+		// StepVal = AlgorithmInstance->Quant.LastResult.FinalValue;
 	}
 }
 

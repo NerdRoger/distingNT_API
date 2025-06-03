@@ -281,18 +281,19 @@ void QuantizerMode::Encoder2ShortPress() {
 
 
 void QuantizerMode::DrawQuantizationResults() const {
-	auto result = AlgorithmInstance->Quant.LastResult;
-	auto x = ModeAreaX + 33;
+	// TODO:  this whole mode goes away once we seperate quantizer from sequencer
+	// auto result = AlgorithmInstance->Quant.LastResult;
+	// auto x = ModeAreaX + 33;
 
-	if (strcmp(result.QuantizedNoteName, "") != 0) {
-		if (strcmp(result.QuantizedNoteName, result.FinalNoteName) != 0) {
-			NT_drawText(x - 20, 44, result.QuantizedNoteName, 8);
-			NT_drawText(x, 44, "=>", 8);
-			NT_drawText(x + 20, 44, result.FinalNoteName, 8);
-		} else {
-			NT_drawText(x, 44, result.QuantizedNoteName, 8);
-		}
-	}
+	// if (strcmp(result.QuantizedNoteName, "") != 0) {
+	// 	if (strcmp(result.QuantizedNoteName, result.FinalNoteName) != 0) {
+	// 		NT_drawText(x - 20, 44, result.QuantizedNoteName, 8);
+	// 		NT_drawText(x, 44, "=>", 8);
+	// 		NT_drawText(x + 20, 44, result.FinalNoteName, 8);
+	// 	} else {
+	// 		NT_drawText(x, 44, result.QuantizedNoteName, 8);
+	// 	}
+	// }
 }
 
 

@@ -7,9 +7,6 @@
 #include "sequencer.h"
 
 
-uint32_t const DirectionalSequencer::SamplesPerMs = NT_globals.sampleRate / 1000;
-
-
 const char* const DirectionalSequencer::EnumStringsMaxGateFrom[] = { "Max Gate Len", "Clock" };
 
 
@@ -113,7 +110,6 @@ _NT_algorithm* DirectionalSequencer::Construct(const _NT_algorithmMemoryPtrs& pt
 
 	alg.Selector.Initialize(alg);
 	alg.Seq.Initialize(alg);
-	alg.Quant.Initialize(alg);
 	alg.Selector.SelectModeByIndex(0);
 	return &alg;
 }
@@ -191,13 +187,7 @@ void DirectionalSequencer::Step(_NT_algorithm* self, float* busFrames, int numFr
 
 	// we can do this tracking outside of the processing loop, because we don't need sample-level accuracy
 	// we are only tracking milliseconds, so block-level accuracy should be fine
-	alg.InternalFrameCount += numFrames;
-
-	uint32_t deltaMs = alg.InternalFrameCount / DirectionalSequencer::SamplesPerMs;
-	alg.TotalMs += deltaMs;
-
-	// subtract off the number of samples we just added to our running ms counter, to keep InternalFrameCount low
-	alg.InternalFrameCount -= (deltaMs * DirectionalSequencer::SamplesPerMs);
+	auto deltaMs = alg.CountMilliseconds(numFrames);
 
 	// process the sequencer once per millisecond, we don't need sample-accurate changes
 	if (deltaMs > 0) {
@@ -279,9 +269,7 @@ void DirectionalSequencer::CustomUI(_NT_algorithm* self, const _NT_uiData& data)
 		alg.Pot3Release();
 	}
 
-	alg.PreviousPotValues[0] = data.pots[0];
-	alg.PreviousPotValues[1] = data.pots[1];
-	alg.PreviousPotValues[2] = data.pots[2];
+	RecordPreviousPotValues(self, data);
 }
 
 
@@ -560,41 +548,6 @@ void DirectionalSequencer::ProcessLongPresses() {
 			}
 		}
 	}
-}
-
-
-void DirectionalSequencer::UpdateValueWithPot(int potIndex, float currentPotVal, float& value, float min, float max) {
-	auto prevPotVal = PreviousPotValues[potIndex];
-
-	// get the change in pot position since our last known value
-	auto dx = currentPotVal - prevPotVal;
-
-	// if it has changed too much (more than 1%), it probably happened when we were unaware of it, in another Disting screen.
-	// so just return the known value, and the next call should get us back on track, once our tracking is back in sync
-	if (abs(dx) > 0.01) {
-		return;
-	}
-
-	// are we increasing or decreasing the pot?
-	bool increasing = (currentPotVal > prevPotVal);
-	
-	// if we're very close to an extreme, go ahead and set the value to the relevant min or max
-	// this means we will end at 10 instead of 9.99973 for example, or 0 instead of 0.00042
-	// only do this when moving toward the extreme, as doing it when moving away just keeps attracting the value back
-	if (increasing && (currentPotVal > 0.995)) {
-		value = max;
-		return;
-	}
-	if (!increasing && currentPotVal < 0.005) {
-		value = min;
-		return;
-	}
-
-	// otherwise, soft takeover logic
-	auto valRange = increasing ? max - value : value - min;
-	auto potRange = increasing ? 1 - prevPotVal : prevPotVal;
-	auto factor = valRange / potRange;
-	value += (factor * dx);
 }
 
 
