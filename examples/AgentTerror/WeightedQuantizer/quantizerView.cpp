@@ -280,6 +280,7 @@ void QuantizerView::Encoder2ShortPress() {
 	NT_setParameterFromUi(algIndex, kWQParamBankScanPosition + NT_parameterOffset(), val);
 
 	AlgorithmInstance->LoadNotesFromBank(SelectedBankIndex);
+	LoadKeyControlForEditing();
 	AlgorithmInstance->HelpText.DisplayHelpText("            Loaded notes from bank");
 }
 

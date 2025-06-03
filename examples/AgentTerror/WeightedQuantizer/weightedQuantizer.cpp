@@ -258,8 +258,8 @@ bool WeightedQuantizer::Draw(_NT_algorithm* self) {
 }
 
 
-bool WeightedQuantizer::HasCustomUI(_NT_algorithm* self) {
-	return true;
+uint32_t WeightedQuantizer::HasCustomUI(_NT_algorithm* self) {
+	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR;
 }
 
 
@@ -280,7 +280,7 @@ void WeightedQuantizer::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 		alg.Encoder2Turn(data.encoders[1]);
 	}
 
-	if (data.potChange & kNT_potL) {
+	if (data.controls & kNT_potL) {
 		alg.Pot1Turn(data.pots[0]);
 	}
 
@@ -288,19 +288,19 @@ void WeightedQuantizer::CustomUI(_NT_algorithm* self, const _NT_uiData& data) {
 	// 	alg.Pot2Turn(data.pots[1]);
 	// }
 
-	if (data.potChange & kNT_potR) {
+	if (data.controls & kNT_potR) {
 		alg.Pot3Turn(data.pots[2]);
 	}
 
-	if ((data.buttons & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
+	if ((data.controls & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
 		alg.Encoder2Push();
 	}
 
-	if (!(data.buttons & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
+	if (!(data.controls & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
 		alg.Encoder2Release();
 	}
 
-	if ((data.buttons & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
+	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
 		alg.Pot3Push();
 	}
 
