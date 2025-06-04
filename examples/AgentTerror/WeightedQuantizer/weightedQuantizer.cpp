@@ -68,14 +68,17 @@ const _NT_specification WeightedQuantizer::SpecificationsDef[] = {
 
 
 void WeightedQuantizer::BuildParameters() {
+	int numPages = 0;
+
 	// general page
-	PageDefs[0] = { .name = "General", .numParams = ARRAY_SIZE(GeneralPageDef), .params = GeneralPageDef };
+	PageDefs[numPages] = { .name = "General", .numParams = ARRAY_SIZE(GeneralPageDef), .params = GeneralPageDef };
 	ParameterDefs[kWQParamTransposeAll]       = { .name = "Transpose All",    .min =  -60, .max =    60, .def =    0, .unit = kNT_unitSemitones, .scaling = kNT_scalingNone, .enumStrings = NULL };
 	ParameterDefs[kWQParamBankScanPosition]   = { .name = "Bank Scan",        .min = 1000, .max = 10000, .def = 1000, .unit = kNT_unitNone,      .scaling = kNT_scaling1000, .enumStrings = NULL };
 	ParameterDefs[kWQParamTriggerSampleDelay] = { .name = "Trig Samp. Delay", .min =    0, .max =    10, .def =    2, .unit = kNT_unitNone,      .scaling = kNT_scalingNone, .enumStrings = NULL };
+	numPages++;
 
 	// note weights page
-	PageDefs[1] = { .name = "Note Weights", .numParams = ARRAY_SIZE(NoteWeightsPageDef), .params = NoteWeightsPageDef };
+	PageDefs[numPages] = { .name = "Note Weights", .numParams = ARRAY_SIZE(NoteWeightsPageDef), .params = NoteWeightsPageDef };
 	ParameterDefs[kWQParamQuantWeightC]      = { .name = "C",  .min = 0, .max = 1000, .def = 1000, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
 	ParameterDefs[kWQParamQuantWeightCSharp] = { .name = "C#", .min = 0, .max = 1000, .def =    0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
 	ParameterDefs[kWQParamQuantWeightD]      = { .name = "D",  .min = 0, .max = 1000, .def = 1000, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
@@ -88,6 +91,7 @@ void WeightedQuantizer::BuildParameters() {
 	ParameterDefs[kWQParamQuantWeightA]      = { .name = "A",  .min = 0, .max = 1000, .def = 1000, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
 	ParameterDefs[kWQParamQuantWeightASharp] = { .name = "A#", .min = 0, .max = 1000, .def =    0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
 	ParameterDefs[kWQParamQuantWeightB]      = { .name = "B",  .min = 0, .max = 1000, .def = 1000, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL };
+	numPages++;
 
 	size_t idx = kWQNumCommonParameters;
 	uint8_t* pagePtr = PageParams;
@@ -105,13 +109,14 @@ void WeightedQuantizer::BuildParameters() {
 			pagePtr[j] = idx + j;
 		}
 
-		PageDefs[i + 2] = { .name = PageNamesDef[i], .numParams = kWQNumPerChannelParameters, .params = pagePtr };
+		PageDefs[numPages] = { .name = PageNamesDef[i], .numParams = kWQNumPerChannelParameters, .params = pagePtr };
 
 		pagePtr += kWQNumPerChannelParameters;
 		idx += kWQNumPerChannelParameters;
+		numPages++;
 	}
 
-	PagesDefs.numPages = NumChannels + 2;
+	PagesDefs.numPages = numPages;
 	PagesDefs.pages = PageDefs;
 
 	parameters = ParameterDefs;
