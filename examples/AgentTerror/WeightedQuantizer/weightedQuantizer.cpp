@@ -111,7 +111,7 @@ void WeightedQuantizer::BuildParameters() {
 		idx += kWQNumPerChannelParameters;
 	}
 
-	PagesDefs.numPages = ARRAY_SIZE(PageDefs);
+	PagesDefs.numPages = NumChannels + 2;
 	PagesDefs.pages = PageDefs;
 
 	parameters = ParameterDefs;
