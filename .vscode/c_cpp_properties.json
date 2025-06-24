@@ -5,8 +5,9 @@
             "includePath": [
                 "${workspaceFolder}/examples/AgentTerror/include",
                 "${workspaceFolder}/include",
+                "${workspaceFolder}/examples/AgentTerror/Common/include",
                 "${workspaceFolder}/examples/AgentTerror/WeightedQuantizer/include",
-                "${workspaceFolder}/examples/AgentTerror/Common/include"
+                "${workspaceFolder}/examples/AgentTerror/DirectionalSequencer/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/arm-none-eabi-c++",

@@ -2,9 +2,7 @@
 #include "ownedBase.h"
 #include "modeBase.h"
 #include "gridMode.h"
-#include "quantizerMode.h"
 #include "settingsMode.h"
-#include "userTriggersMode.h"
 
 struct ModeSelector : OwnedBase<DirectionalSequencer> {
 private:
@@ -15,10 +13,8 @@ public:
 	static constexpr int UnselectedColor = 5;
 
 	GridMode Grid;
-	QuantizerMode Quantizer;
 	SettingsMode Settings;
-	UserTriggersMode UserTriggers;
-	ModeBase* Modes[4];
+	ModeBase* Modes[2];
 	ModeSelector();
 	void SelectModeByIndex(uint8_t index);
 	ModeBase& GetSelectedMode() const;

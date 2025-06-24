@@ -1,16 +1,16 @@
 ifndef NT_API_PATH
-	NT_API_PATH := ../..
+	NT_API_PATH := ../../..
 endif
 
-INCLUDE_PATHS := -I$(NT_API_PATH)/include -I./include
+INCLUDE_PATHS := -I$(NT_API_PATH)/include -I./include -I../Common/include
 
 CPP_FLAGS := -std=c++23 -mcpu=cortex-m7 -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -fno-exceptions -fno-rtti -Os -fPIC -Wall
 CPP_FLAGS_DEBUG := $(CPP_FLAGS) -g -O0
 
-CPP_FILES := $(wildcard *.cpp)
+CPP_FILES := $(wildcard *.cpp ../Common/*.cpp)
 OBJ_FILES := $(patsubst %.cpp,%.o,$(CPP_FILES))
 
-FINAL_OUTPUT := ../plugins/directionalSequencer.o
+FINAL_OUTPUT := ../../plugins/directionalSequencer.o
 
 all: $(FINAL_OUTPUT)
 

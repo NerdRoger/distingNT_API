@@ -3,9 +3,7 @@
 
 ModeSelector::ModeSelector() {
 	Modes[0] = &Grid;
-	Modes[1] = &Quantizer;
-	Modes[2] = &Settings;
-	Modes[3] = &UserTriggers;
+	Modes[1] = &Settings;
 }
 
 
@@ -25,8 +23,6 @@ ModeBase& ModeSelector::GetSelectedMode() const {
 void ModeSelector::Draw() const {
 	Modes[0]->DrawIcon(5,   5, SelectedModeIndex == 0 ? SelectedColor : UnselectedColor);
 	Modes[1]->DrawIcon(26,  5, SelectedModeIndex == 1 ? SelectedColor : UnselectedColor);
-	Modes[2]->DrawIcon(26, 26, SelectedModeIndex == 2 ? SelectedColor : UnselectedColor);
-	Modes[3]->DrawIcon(5,  26, SelectedModeIndex == 3 ? SelectedColor : UnselectedColor);
 }
 
 

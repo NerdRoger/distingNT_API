@@ -62,9 +62,9 @@ void Sequencer::ProcessClockTrigger() {
 
 	// calculate if the clock rate is stable...  only then can we ratchet
 	// we define stable to mean within 5% of the previous rate
-	float delta = PrevClockRate - ClockRate;
-	float percentOff = abs(delta) / static_cast<float>(PrevClockRate);
-	StableClock = (percentOff <= 0.05);
+	float delta = static_cast<float>(PrevClockRate) - static_cast<float>(ClockRate);
+	float percentOff = fabsf(delta) / static_cast<float>(PrevClockRate);
+	StableClock = (percentOff <= 0.05f);
 
 	LastClock = AlgorithmInstance->TotalMs;
 	PrevClockRate = ClockRate;
@@ -142,12 +142,6 @@ void Sequencer::Advance() {
 	}
 
 	MoveToNextCell();
-	CalculateStepValue();
-	ProcessAccumulator();
-	ProcessDrift();
-	AttenuateValue();
-	OffsetValue();
-	QuantizeValue();
 
 	// start off emitting a gate...  further processing may change this
 	EmitGate = true;
@@ -159,6 +153,14 @@ void Sequencer::Advance() {
 	CalculateGateLength();
 
 	if (EmitGate) {
+		// only change the value when we are emitting a gate
+		CalculateStepValue();
+		ProcessAccumulator();
+		ProcessDrift();
+		AttenuateValue();
+		OffsetValue();
+		QuantizeValue();
+
 		SetupStepValue();
 		DipIfNeccessary();
 		ProcessGlide();
@@ -290,15 +292,9 @@ void Sequencer::OffsetValue() {
 
 
 void Sequencer::QuantizeValue()	{
-	// if we are using send/return to quantize, use the return value, otherwise use our quantizer
-	// TODO:  maybe disable elements of quantizer view if we are not using it
 	if (QuantReturnSupplied) {
 		PreQuantStepVal = StepVal;
 		StepVal = QuantReturn;
-	} else {
-		// TODO:  remove thos altogether once we seperate quantizer from sequencer
-		// AlgorithmInstance->Quant.QuantizeValue(StepVal);
-		// StepVal = AlgorithmInstance->Quant.LastResult.FinalValue;
 	}
 }
 
@@ -360,7 +356,7 @@ void Sequencer::CalculateGateLength() {
 	// calculate the gate length for the step
 	auto gateLengthSource = AlgorithmInstance->v[kParamGateLengthSource];
 	if (gateLengthSource == 0) {
-		auto maxLen = AlgorithmInstance->v[kParamGateLengthSource];
+		auto maxLen = AlgorithmInstance->v[kParamMaxGateLength];
 		GateLen = maxLen * GatePct / 100;
 	} else if (gateLengthSource == 1) {
 		GateLen = ClockRate * GatePct / 100;

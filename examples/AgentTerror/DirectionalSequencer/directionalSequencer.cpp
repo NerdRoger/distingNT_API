@@ -28,21 +28,6 @@ const _NT_parameter DirectionalSequencer::ParametersDef[] {
 
 	{ .name = "Atten. Value", .min = 0,     .max = 1000, .def = 1000, .unit = kNT_unitPercent,   .scaling = kNT_scaling10,   .enumStrings = NULL },
 	{ .name = "Offset Value", .min = -5000, .max = 5000, .def = 0,    .unit = kNT_unitVolts,     .scaling = kNT_scaling1000, .enumStrings = NULL },
-	{ .name = "Transpose",    .min = -60,   .max = 60,   .def = 0,    .unit = kNT_unitSemitones, .scaling = kNT_scalingNone, .enumStrings = NULL },
-
-	// TODO:  Maybe adjust/shorten these names since we can place them on parameter pages in C++
-	{ .name = "Quant Weight C",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight C#", .min = 0, .max = 1000, .def =   0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight D",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight D#", .min = 0, .max = 1000, .def =   0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight E",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight F",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight F#", .min = 0, .max = 1000, .def =   0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight G",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight G#", .min = 0, .max = 1000, .def =   0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight A",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight A#", .min = 0, .max = 1000, .def =   0, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
-	{ .name = "Quant Weight B",  .min = 0, .max = 1000, .def = 500, .unit = kNT_unitNone, .scaling = kNT_scaling100, .enumStrings = NULL },
 
 	{ .name = "Gate Len From",       .min =    0, .max =    1, .def =    1, .unit = kNT_unitEnum,    .scaling = kNT_scalingNone, .enumStrings = EnumStringsMaxGateFrom },
 	{ .name = "Max Gate Len",        .min =    0, .max = 1000, .def =  100, .unit = kNT_unitMs,      .scaling = kNT_scalingNone, .enumStrings = NULL },
@@ -59,10 +44,7 @@ const _NT_parameter DirectionalSequencer::ParametersDef[] {
 
 
 const uint8_t DirectionalSequencer::QuantizePageDef[] = {
-	kParamAttenValue, kParamOffsetValue, kParamTranspose, kParamQuantWeightC,
-	kParamQuantWeightCSharp, kParamQuantWeightD, kParamQuantWeightDSharp, kParamQuantWeightE,
-	kParamQuantWeightF, kParamQuantWeightFSharp, kParamQuantWeightG, kParamQuantWeightGSharp,
-	kParamQuantWeightA, kParamQuantWeightASharp, kParamQuantWeightB
+	kParamAttenValue, kParamOffsetValue
 };
 
 
@@ -204,23 +186,29 @@ bool DirectionalSequencer::Draw(_NT_algorithm* self) {
 	alg.Selector.Draw();
 
 
-// NT_drawText(0, 10, alg.Seq.DebugText, 15);
-// NT_drawText(0, 20, alg.Seq.DebugText2, 15);
-// NT_drawText(0, 30, alg.Seq.DebugText3, 15);
-// NT_drawText(0, 40, alg.Seq.DebugText4, 15);
-// NT_drawText(0, 50, alg.Seq.DebugText5, 15);
+
 // TODO:  remove this at the end of development
 	// char buf[15];
-	// NT_intToString(buf, randNum);
+	// NT_drawShapeI(kNT_rectangle, 0, 0, 50, 50, 0);
+  // NT_drawText(0, 10, alg.Seq.StableClock ? "stable" : "unstable", 15);
+	// NT_intToString(buf, alg.Seq.ClockRateFreeze);
+	// NT_drawText(0, 20, buf, 15);
+	// NT_intToString(buf, alg.Seq.PrevClockRateFreeze);
 	// NT_drawText(0, 30, buf, 15);
+  // NT_drawText(0, 40, alg.Seq.Ratchets.Active ? "ratchet" : "normal", 15);
+	// NT_floatToString(buf, alg.Seq.PercentOff, 3);
+	// NT_drawText(0, 50, buf, 15);
+	// NT_floatToString(buf, alg.Seq.Delta, 3);
+	// NT_drawText(100, 50, buf, 15);
+
 
 	alg.Selector.GetSelectedMode().Draw();
 	return true;
 }
 
 
-bool DirectionalSequencer::HasCustomUI(_NT_algorithm* self) {
-	return true;
+uint32_t DirectionalSequencer::HasCustomUI(_NT_algorithm* self) {
+	return kNT_potL | kNT_potR | kNT_encoderL | kNT_encoderR | kNT_encoderButtonR | kNT_potButtonR;
 }
 
 
@@ -241,31 +229,31 @@ void DirectionalSequencer::CustomUI(_NT_algorithm* self, const _NT_uiData& data)
 		alg.Encoder2Turn(data.encoders[1]);
 	}
 
-	if (data.potChange & kNT_potL) {
+	if (data.controls & kNT_potL) {
 		alg.Pot1Turn(data.pots[0]);
 	}
 
-	if (data.potChange & kNT_potC) {
+	if (data.controls & kNT_potC) {
 		alg.Pot2Turn(data.pots[1]);
 	}
 
-	if (data.potChange & kNT_potR) {
+	if (data.controls & kNT_potR) {
 		alg.Pot3Turn(data.pots[2]);
 	}
 
-	if ((data.buttons & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
+	if ((data.controls & kNT_encoderButtonR) && !(data.lastButtons & kNT_encoderButtonR)) {
 		alg.Encoder2Push();
 	}
 
-	if (!(data.buttons & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
+	if (!(data.controls & kNT_encoderButtonR) && (data.lastButtons & kNT_encoderButtonR)) {
 		alg.Encoder2Release();
 	}
 
-	if ((data.buttons & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
+	if ((data.controls & kNT_potButtonR) && !(data.lastButtons & kNT_potButtonR)) {
 		alg.Pot3Push();
 	}
 
-	if (!(data.buttons & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
+	if (!(data.controls & kNT_potButtonR) && (data.lastButtons & kNT_potButtonR)) {
 		alg.Pot3Release();
 	}
 
